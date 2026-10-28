@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Voice Detector</title>
+<meta name="description" content="Check whether a voice recording is real or AI-generated. Runs entirely in your browser; your audio never leaves your device.">
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --ink:#14181f; --muted:#667085; --line:#e4e7ec;
+    --real:#12805c; --real-bg:#e6f6ef; --ai:#c4320a; --ai-bg:#fdece6; --unsure:#b54708; --unsure-bg:#fef4e2;
+    --accent:#3b5bdb; --accent-ink:#fff;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f1218; --card:#171b23; --ink:#eef1f6; --muted:#98a2b3; --line:#2a303b;
+      --real:#4cd4a0; --real-bg:#10281f; --ai:#ff8a65; --ai-bg:#2e1912; --unsure:#f5b04a; --unsure-bg:#2b2111;
+      --accent:#7c93ff; --accent-ink:#0b1020; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  main{max-width:720px;margin:0 auto;padding:32px 16px 64px}
+  h1{font-size:1.6rem;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 24px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
+  .tabs{display:flex;gap:8px;margin-bottom:16px}
+  .tab{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font:inherit;cursor:pointer}
+  .tab[aria-selected=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);font-weight:600}
+  .drop{border:2px dashed var(--line);border-radius:12px;padding:36px 16px;text-align:center;color:var(--muted);cursor:pointer;transition:.15s}
+  .drop.over,.drop:focus-visible{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,transparent);outline:none}
+  .drop b{color:var(--ink)}
+  button.primary{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:12px 22px;font:inherit;font-weight:600;cursor:pointer}
+  button.primary:disabled{opacity:.5;cursor:default}
+  button.rec.on{background:var(--ai);color:#fff}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  canvas{width:100%;height:72px;border-radius:8px;background:color-mix(in srgb,var(--ink) 4%,transparent);display:block;margin-top:14px}
+  .hint{color:var(--muted);font-size:.9rem;margin-top:10px}
+  audio{width:100%;margin-top:14px}
+  [hidden]{display:none!important}
+  .verdict{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .badge{font-size:1.5rem;font-weight:700;padding:8px 18px;border-radius:12px}
+  .badge.real{background:var(--real-bg);color:var(--real)}
+  .badge.ai{background:var(--ai-bg);color:var(--ai)}
+  .badge.unsure{background:var(--unsure-bg);color:var(--unsure)}
+  .meter{height:14px;border-radius:7px;background:linear-gradient(90deg,var(--real),#e9c46a 50%,var(--ai));position:relative;margin:22px 0 6px}
+  .meter i{position:absolute;top:-5px;width:4px;height:24px;border-radius:2px;background:var(--ink);transform:translateX(-2px);transition:left .5s}
+  .scale{display:flex;justify-content:space-between;color:var(--muted);font-size:.85rem}
+  .segs{display:flex;gap:3px;margin-top:8px;height:34px}
+  .segs span{flex:1;border-radius:4px;min-width:4px}
+  .notes{margin:12px 0 0;padding-left:18px;color:var(--muted);font-size:.92rem}
+  .err{color:var(--ai)}
+  progress{width:100%;height:10px;margin-top:10px;accent-color:var(--accent)}
+  .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s .8s linear infinite;vertical-align:-3px;margin-right:8px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  footer{color:var(--muted);font-size:.85rem;margin-top:28px}
+  .privacy{display:inline-block;font-size:.85rem;color:var(--real);background:var(--real-bg);border-radius:999px;padding:2px 12px;margin-bottom:14px}
+</style>
+</head>
+<body>
+<main>
+  <h1>AI Voice Detector</h1>
+  <p class="sub">Upload an audio clip or record from your microphone. The model estimates whether the voice is a real human or AI-generated.</p>
+  <div class="privacy">&#128274; Runs in your browser &mdash; your audio never leaves your device</div>
+
+  <div class="card" id="loading">
+    <div id="load-text"><span class="spin"></span>Loading the detection model&hellip;</div>
+    <progress id="load-bar" max="100" value="0"></progress>
+    <div class="hint" id="load-hint">One-time download of about 70 MB; your browser keeps it for next time.</div>
+  </div>
+
+  <div id="app" hidden>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-upload" aria-selected="true">Upload audio</button>
+      <button class="tab" role="tab" id="tab-mic" aria-selected="false">Use microphone</button>
+    </div>
+
+    <section class="card" id="pane-upload">
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose an audio file">
+        <b>Drop an audio file here</b> or click to browse<br>
+        <small>wav, mp3, m4a, flac, ogg, webm &middot; up to 25 MB</small>
+      </div>
+      <input type="file" id="file" accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg,.webm,.aac" hidden>
+      <audio id="player-up" controls hidden></audio>
+    </section>
+
+    <section class="card" id="pane-mic" hidden>
+      <div class="row">
+        <button class="primary rec" id="rec">&#9679; Start recording</button>
+        <span id="timer" class="hint" style="margin:0">0:00</span>
+      </div>
+      <canvas id="wave" width="680" height="72"></canvas>
+      <div class="hint">Speak naturally for at least 3 seconds (10+ is better). Quiet room, normal distance from the mic.</div>
+      <audio id="player-mic" controls hidden></audio>
+    </section>
+
+    <div class="card" id="status" hidden></div>
+
+    <section class="card" id="result" hidden>
+      <div class="verdict">
+        <div class="badge" id="badge"></div>
+        <div><div id="headline" style="font-weight:600"></div><div class="hint" id="subline" style="margin:0"></div></div>
+      </div>
+      <div class="meter"><i id="needle"></i></div>
+      <div class="scale"><span>Real human</span><span>AI-generated</span></div>
+      <div style="margin-top:18px;font-weight:600;font-size:.95rem">Segment by segment <span class="hint" style="font-weight:400">(each 3 s; grey = silence)</span></div>
+      <div class="segs" id="segs"></div>
+      <ul class="notes" id="notes"></ul>
+    </section>
+  </div>
+
+  <footer>Detection is probabilistic and can be wrong, especially for heavily compressed audio, noisy rooms, or voice generators the model has not seen. Do not treat it as proof.</footer>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

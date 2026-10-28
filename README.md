@@ -99,6 +99,29 @@ Design notes: speakers/recordings are held out as whole groups (never split insi
 same codecs and silence trimming so "was compressed" or "starts with silence" can't be a shortcut; only the lower
 8 WavLM layers are used because deepfake artefacts live in the lower/mid layers and it halves CPU cost.
 
+## Web version (Vercel, runs fully in the browser)
+
+`web/` is a static site: the same detector, but WavLM runs **in the visitor's browser** through ONNX Runtime Web (WASM),
+so no server is needed and audio never leaves the device. Vercel cannot host the Python/torch backend (PyTorch alone is
+530 MB; function limit 250 MB), which is why the model was converted.
+
+```
+web/index.html, app.js   UI (upload + microphone)
+web/detector.js, dsp.js  JavaScript port of the pipeline (trim, windows, VAD, classifier, aggregation)
+web/model/               wavlm_pooled.<hash>.onnx (69 MB: int8 matmuls + fp16-stored convs) and classifier.json
+web/ort/                 vendored onnxruntime-web 1.30.0 (MIT)
+web/vercel.json          cross-origin-isolation headers (multi-threaded WASM) + caching
+```
+
+Rebuild after retraining: `export_onnx.py` -> `quantize_onnx.py` -> `export_classifier.py` (writes the hashed model name and the
+folded classifier). Test locally with `python scripts/dev_web.py` (same headers as Vercel) and deploy with
+`cd web && npx vercel --prod`.
+
+Checks: the ONNX export matches PyTorch to ~2e-6; int8 quantisation shifts window logits by 0.6 (std) with 0 flipped
+decisions on 80 windows; the browser pipeline gave the same verdicts as the Python detector on 10/10 test files and identical
+clip durations (P(AI) within a few points; ~0.4 s per 3 s segment on a laptop).
+The "Teach it" tab and `tune_user.py` are part of the local Flask app only.
+
 ## Tune it on your own voice
 
 1. Open the app, go to the **Teach it** tab. Record 20+ clips (8-15 s each) of your real voice, and add 20+ AI-voice clips
