@@ -22,6 +22,7 @@ REPORTS = ROOT / "reports"
 MODELS = ROOT / "models"
 TRAIN_SETS = ["gary", "unidata", "asv_train", "cv", "libri"]
 EXTRA_SETS = ["asv_test"]          # unseen speakers + unseen attack systems (A07-A19)
+USE_REPLAY = True                  # include speaker->room->mic degraded samples when their features exist
 
 
 def load(name):
@@ -29,15 +30,28 @@ def load(name):
     z = np.load(FEAT / f"{name}.npz")
     ai = z["aug_idx"]
     y, grp = z["y"], np.array([re.sub(r"_p2$", "", g) for g in z["group"]])
-    return {
+    d = {
         "X": np.concatenate([z["Xc"], z["Xa"]]),
         "y": np.concatenate([y, y[ai]]),
         "group": np.concatenate([grp, grp[ai]]),
         "system": np.concatenate([z["system"], z["system"][ai]]),
         "clip": np.concatenate([z["clip"], z["clip"][ai]]),
         "aug": np.concatenate([np.zeros(len(y), bool), np.ones(len(ai), bool)]),
-        "ds": np.array([name] * (len(y) + len(ai))),
+        "replay": np.zeros(len(y) + len(ai), bool),
     }
+    rp = FEAT / f"{name}_replay.npz"           # speaker -> room -> microphone copies (extract_replay.py)
+    if rp.exists() and USE_REPLAY:
+        r = np.load(rp)
+        n = len(r["y"])
+        d["X"] = np.concatenate([d["X"], r["Xr"]])
+        d["y"] = np.concatenate([d["y"], r["y"]])
+        d["group"] = np.concatenate([d["group"], np.array([re.sub(r"_p2$", "", g) for g in r["group"]])])
+        d["system"] = np.concatenate([d["system"], r["system"]])
+        d["clip"] = np.concatenate([d["clip"], r["clip"]])
+        d["aug"] = np.concatenate([d["aug"], np.ones(n, bool)])
+        d["replay"] = np.concatenate([d["replay"], np.ones(n, bool)])
+    d["ds"] = np.array([name] * len(d["y"]))
+    return d
 
 
 def concat(parts):
@@ -152,18 +166,23 @@ def final(layers, C):
     evals = {f"{n} (held-out speakers/recordings)": p[1] for n, p in parts.items()}
     for n in available(EXTRA_SETS):
         evals[f"{n} (unseen attacks + speakers)"] = data[n]
+    cats = (("clean", lambda d: ~d["aug"] & ~d["replay"]), ("augmented", lambda d: d["aug"] & ~d["replay"]),
+            ("replay (speaker->room->mic)", lambda d: d["replay"]))
+    cat_preds = {}
     for name, d in evals.items():
-        for aug in (False, True):
-            m = d["aug"] == aug
+        for cname, sel in cats:
+            m = sel(d)
             if not m.any():
                 continue
             p = predict(clf, take(d, m), layers)
-            r = metrics(d["y"][m], p)
-            if r:
-                report["eval"][f"{name} / {'augmented' if aug else 'clean'}"] = r
-                pooled_p.append(p); pooled_y.append(d["y"][m])
+            cat_preds[(name, cname)] = (p, d["y"][m])
+            pooled_p.append(p); pooled_y.append(d["y"][m])
     pp, yy = np.concatenate(pooled_p), np.concatenate(pooled_y)
-    _, thr = eer(yy, pp)
+    _, thr = eer(yy, pp)                       # one threshold for everything, incl. re-recorded audio (what a mic gives)
+    for (name, cname), (p, y) in cat_preds.items():
+        r = metrics(y, p, thr)
+        if r:
+            report["eval"][f"{name} / {cname}"] = r
     report["pooled"] = metrics(yy, pp, thr) | {"threshold": thr}
     # per-attack-system detection rate on unseen ASVspoof attacks
     if "asv_test" in data:
@@ -181,7 +200,7 @@ def final(layers, C):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("mode", choices=["explore", "final"])
-    ap.add_argument("--layers", type=int, nargs="+", default=[2, 4, 6, 8])
+    ap.add_argument("--layers", type=int, nargs="+", default=[2, 3, 5, 7])
     ap.add_argument("--C", type=float, default=0.05)
     a = ap.parse_args()
     if a.mode == "explore":

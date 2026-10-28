@@ -55,8 +55,29 @@ Pooled over all held-out sets: 90.9 % accuracy, 9.1 % equal-error-rate, AUC 0.97
 
 Re-encoded as WebM/Opus 32 kbps (what a browser microphone produces): real 79 / 8 / 12 %, both fake sets 100 %.
 
+### Speaker-to-microphone ("replay") audio
+
+A live mic hears the room, not the file. Playing an AI voice through speakers and recording it destroys many of the
+artefacts the model relies on, and the first version of this model called most such audio **real** (simulated test: only
+10-30 % of heavily degraded AI clips were caught, 45-80 % were called real). Training now includes simulated
+speaker -> room reverb -> mic noise -> Opus/AAC copies of every window (`augment.replay`, `extract_replay.py`).
+
+| Held-out set | Replay-condition accuracy |
+|---|---|
+| Common Voice vs neural TTS | 93 % |
+| ASVspoof 2019 (known attacks) | 86 % |
+| Modern TTS vs YouTube | 85 % |
+| LibriSpeech vs neural TTS | 82 % |
+| ASVspoof 2019 unseen attacks | 79 % |
+
+On generators never used in training (heavy degradation): Windows voices 30 % -> 85 % detected, Google TTS 10 % -> 45 %,
+neural voices 10 % -> 50 %; "AI called real" fell from 45-80 % to 0-35 %. The price: about 1-2 points on clean audio and
+slightly more real voices flagged as AI (clean LibriSpeech false alarms 15 % -> 20 %). This is *simulated* replay; the
+reliable fix is to record your own speaker/room/mic setup in the app's "Teach it" tab and run `tune_user.py`.
+
 ### Limits you should know about
 
+- **Re-recorded AI audio is still the hardest case** (see above).
 - **It can flag real voices as AI**, especially recordings unlike its training data. Before I added LibriSpeech
   speakers to training, 35 % of unseen real voices were wrongly flagged; it is now ~10 %. Your own microphone and room
   are an unknown: please try it on your voice and tell me what you see.

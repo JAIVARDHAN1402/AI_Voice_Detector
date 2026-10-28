@@ -90,3 +90,29 @@ def augment(y: np.ndarray, rng: np.random.Generator) -> np.ndarray:
         y = codec_roundtrip(y, codec, br)
     y = y * float(rng.uniform(0.2, 1.0))
     return np.clip(y, -1, 1).astype(np.float32)
+
+
+def replay(y: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+    """Simulate audio played from a (small) speaker in a room and re-recorded by a microphone:
+    speaker band-limit -> room reverb -> mic noise -> browser/phone codec -> level change.
+    Applied to both classes in training so 'sounds re-recorded' can't mean 'real'."""
+    from scipy.signal import butter, sosfilt
+    s = float(rng.uniform(0, 1))                                   # 0 = mild, 1 = harsh
+    lo, hi = float(rng.uniform(120, 350)), float(rng.uniform(3500, 7500))
+    y = sosfilt(butter(4, [lo, hi], btype="band", fs=SR, output="sos"), y).astype(np.float32)
+    n = int(rng.uniform(0.2, 0.6) * SR)
+    t = np.arange(n) / SR
+    ir = (rng.standard_normal(n) * np.exp(-6.9 * t / (n / SR))).astype(np.float32)
+    ir[0] = 1.0
+    ir /= np.linalg.norm(ir)
+    mix = 0.35 + 0.35 * s
+    y = (1 - mix) * y + mix * np.convolve(y, ir)[: len(y)]
+    snr = float(rng.uniform(8, 30))
+    z = rng.standard_normal(len(y)).astype(np.float32)
+    y = y + z * np.sqrt((np.mean(y ** 2) + 1e-9) / ((np.mean(z ** 2) + 1e-9) * 10 ** (snr / 10)))
+    if rng.random() < 0.85:
+        y = codec_roundtrip(y, str(rng.choice(["opus", "opus", "aac", "mp3"])), int(rng.choice([24, 32, 48, 64])))
+    if rng.random() < 0.3:                                         # crude AGC / limiter
+        y = np.tanh(y * float(rng.uniform(1.5, 4.0)) / (np.abs(y).max() + 1e-6))
+    y = y * float(rng.uniform(0.2, 1.0))
+    return np.clip(y, -1, 1).astype(np.float32)
