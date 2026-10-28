@@ -1,0 +1,23 @@
+{
+  "real (LibriSpeech)": {
+    "n": 48,
+    "correct": 0.8125,
+    "unsure": 0.08333333333333333,
+    "wrong": 0.10416666666666667,
+    "median_prob_ai": 0.005779771449841584
+  },
+  "fake (Windows SAPI)": {
+    "n": 30,
+    "correct": 1.0,
+    "unsure": 0.0,
+    "wrong": 0.0,
+    "median_prob_ai": 0.9999071997627245
+  },
+  "fake (Google TTS)": {
+    "n": 30,
+    "correct": 1.0,
+    "unsure": 0.0,
+    "wrong": 0.0,
+    "median_prob_ai": 0.9996394885884978
+  }
+}

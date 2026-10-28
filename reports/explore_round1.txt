@@ -1,0 +1,116 @@
+gary: 2214 samples, 1267 fake, 20 groups
+unidata: 236 samples, 175 fake, 20 groups
+asv_train: 2203 samples, 1291 fake, 19 groups
+asv_test: 1204 samples, 735 fake, 78 groups
+held-out=gary      mean_all   C=0.01  clean AUC=0.856 EER=0.233 acc=0.666 real=0.23 fake=1.00
+held-out=gary      mean_all   C=0.01  aug   AUC=0.693 EER=0.374 acc=0.628 real=0.16 fake=0.96
+held-out=gary      mean_all   C=0.1   clean AUC=0.871 EER=0.216 acc=0.672 real=0.24 fake=1.00
+held-out=gary      mean_all   C=0.1   aug   AUC=0.727 EER=0.340 acc=0.644 real=0.18 fake=0.98
+held-out=gary      L2         C=0.01  clean AUC=0.927 EER=0.160 acc=0.659 real=0.22 fake=1.00
+held-out=gary      L2         C=0.01  aug   AUC=0.775 EER=0.294 acc=0.626 real=0.14 fake=0.98
+held-out=gary      L2         C=0.1   clean AUC=0.930 EER=0.151 acc=0.675 real=0.26 fake=1.00
+held-out=gary      L2         C=0.1   aug   AUC=0.785 EER=0.287 acc=0.631 real=0.15 fake=0.98
+held-out=gary      L4         C=0.01  clean AUC=0.758 EER=0.320 acc=0.594 real=0.07 fake=0.99
+held-out=gary      L4         C=0.01  aug   AUC=0.630 EER=0.405 acc=0.598 real=0.07 fake=0.98
+held-out=gary      L4         C=0.1   clean AUC=0.752 EER=0.322 acc=0.596 real=0.08 fake=0.99
+held-out=gary      L4         C=0.1   aug   AUC=0.633 EER=0.402 acc=0.597 real=0.07 fake=0.98
+held-out=gary      L6         C=0.01  clean AUC=0.559 EER=0.467 acc=0.579 real=0.05 fake=0.98
+held-out=gary      L6         C=0.01  aug   AUC=0.461 EER=0.538 acc=0.575 real=0.04 fake=0.96
+held-out=gary      L6         C=0.1   clean AUC=0.582 EER=0.443 acc=0.581 real=0.06 fake=0.98
+held-out=gary      L6         C=0.1   aug   AUC=0.480 EER=0.520 acc=0.575 real=0.04 fake=0.96
+held-out=gary      L8         C=0.01  clean AUC=0.594 EER=0.430 acc=0.590 real=0.08 fake=0.98
+held-out=gary      L8         C=0.01  aug   AUC=0.462 EER=0.529 acc=0.551 real=0.10 fake=0.88
+held-out=gary      L8         C=0.1   clean AUC=0.604 EER=0.421 acc=0.592 real=0.09 fake=0.97
+held-out=gary      L8         C=0.1   aug   AUC=0.474 EER=0.529 acc=0.559 real=0.12 fake=0.88
+held-out=gary      L3+5+7     C=0.01  clean AUC=0.781 EER=0.300 acc=0.599 real=0.07 fake=1.00
+held-out=gary      L3+5+7     C=0.01  aug   AUC=0.616 EER=0.427 acc=0.593 real=0.06 fake=0.98
+held-out=gary      L3+5+7     C=0.1   clean AUC=0.783 EER=0.297 acc=0.597 real=0.07 fake=1.00
+held-out=gary      L3+5+7     C=0.1   aug   AUC=0.628 EER=0.416 acc=0.589 real=0.05 fake=0.98
+held-out=gary      L0-8 even  C=0.01  clean AUC=0.878 EER=0.214 acc=0.666 real=0.23 fake=1.00
+held-out=gary      L0-8 even  C=0.01  aug   AUC=0.717 EER=0.343 acc=0.623 real=0.16 fake=0.96
+held-out=gary      L0-8 even  C=0.1   clean AUC=0.879 EER=0.208 acc=0.681 real=0.27 fake=0.99
+held-out=gary      L0-8 even  C=0.1   aug   AUC=0.726 EER=0.343 acc=0.632 real=0.17 fake=0.96
+held-out=unidata   mean_all   C=0.01  clean AUC=0.769 EER=0.325 acc=0.675 real=0.72 fake=0.66
+held-out=unidata   mean_all   C=0.01  aug   AUC=0.668 EER=0.339 acc=0.645 real=0.62 fake=0.65
+held-out=unidata   mean_all   C=0.1   clean AUC=0.754 EER=0.308 acc=0.656 real=0.68 fake=0.65
+held-out=unidata   mean_all   C=0.1   aug   AUC=0.653 EER=0.400 acc=0.645 real=0.62 fake=0.65
+held-out=unidata   L2         C=0.01  clean AUC=0.805 EER=0.275 acc=0.725 real=0.80 fake=0.70
+held-out=unidata   L2         C=0.01  aug   AUC=0.709 EER=0.358 acc=0.697 real=0.67 fake=0.71
+held-out=unidata   L2         C=0.1   clean AUC=0.795 EER=0.279 acc=0.700 real=0.78 fake=0.68
+held-out=unidata   L2         C=0.1   aug   AUC=0.698 EER=0.312 acc=0.684 real=0.67 fake=0.69
+held-out=unidata   L4         C=0.01  clean AUC=0.642 EER=0.404 acc=0.588 real=0.57 fake=0.59
+held-out=unidata   L4         C=0.01  aug   AUC=0.557 EER=0.451 acc=0.605 real=0.43 fake=0.67
+held-out=unidata   L4         C=0.1   clean AUC=0.641 EER=0.404 acc=0.600 real=0.62 fake=0.59
+held-out=unidata   L4         C=0.1   aug   AUC=0.559 EER=0.484 acc=0.605 real=0.43 fake=0.67
+held-out=unidata   L6         C=0.01  clean AUC=0.592 EER=0.467 acc=0.525 real=0.55 fake=0.52
+held-out=unidata   L6         C=0.01  aug   AUC=0.536 EER=0.516 acc=0.487 real=0.52 fake=0.47
+held-out=unidata   L6         C=0.1   clean AUC=0.596 EER=0.421 acc=0.525 real=0.57 fake=0.51
+held-out=unidata   L6         C=0.1   aug   AUC=0.559 EER=0.474 acc=0.500 real=0.52 fake=0.49
+held-out=unidata   L8         C=0.01  clean AUC=0.706 EER=0.346 acc=0.613 real=0.75 fake=0.57
+held-out=unidata   L8         C=0.01  aug   AUC=0.591 EER=0.465 acc=0.539 real=0.57 fake=0.53
+held-out=unidata   L8         C=0.1   clean AUC=0.719 EER=0.354 acc=0.644 real=0.75 fake=0.61
+held-out=unidata   L8         C=0.1   aug   AUC=0.612 EER=0.423 acc=0.579 real=0.57 fake=0.58
+held-out=unidata   L3+5+7     C=0.01  clean AUC=0.695 EER=0.375 acc=0.631 real=0.62 fake=0.63
+held-out=unidata   L3+5+7     C=0.01  aug   AUC=0.590 EER=0.498 acc=0.539 real=0.43 fake=0.58
+held-out=unidata   L3+5+7     C=0.1   clean AUC=0.689 EER=0.358 acc=0.619 real=0.62 fake=0.62
+held-out=unidata   L3+5+7     C=0.1   aug   AUC=0.594 EER=0.484 acc=0.526 real=0.43 fake=0.56
+held-out=unidata   L0-8 even  C=0.01  clean AUC=0.729 EER=0.346 acc=0.656 real=0.55 fake=0.69
+held-out=unidata   L0-8 even  C=0.01  aug   AUC=0.641 EER=0.363 acc=0.632 real=0.48 fake=0.69
+held-out=unidata   L0-8 even  C=0.1   clean AUC=0.725 EER=0.346 acc=0.650 real=0.55 fake=0.68
+held-out=unidata   L0-8 even  C=0.1   aug   AUC=0.643 EER=0.363 acc=0.645 real=0.52 fake=0.69
+held-out=asv_train mean_all   C=0.01  clean AUC=0.609 EER=0.447 acc=0.578 real=0.10 fake=0.93
+held-out=asv_train mean_all   C=0.01  aug   AUC=0.535 EER=0.477 acc=0.593 real=0.14 fake=0.89
+held-out=asv_train mean_all   C=0.1   clean AUC=0.643 EER=0.420 acc=0.591 real=0.16 fake=0.91
+held-out=asv_train mean_all   C=0.1   aug   AUC=0.557 EER=0.473 acc=0.584 real=0.16 fake=0.86
+held-out=asv_train L2         C=0.01  clean AUC=0.463 EER=0.549 acc=0.533 real=0.05 fake=0.89
+held-out=asv_train L2         C=0.01  aug   AUC=0.476 EER=0.533 acc=0.569 real=0.12 fake=0.86
+held-out=asv_train L2         C=0.1   clean AUC=0.449 EER=0.558 acc=0.530 real=0.07 fake=0.87
+held-out=asv_train L2         C=0.1   aug   AUC=0.466 EER=0.527 acc=0.571 real=0.12 fake=0.87
+held-out=asv_train L4         C=0.01  clean AUC=0.395 EER=0.604 acc=0.463 real=0.06 fake=0.76
+held-out=asv_train L4         C=0.01  aug   AUC=0.388 EER=0.598 acc=0.477 real=0.15 fake=0.69
+held-out=asv_train L4         C=0.1   clean AUC=0.401 EER=0.597 acc=0.455 real=0.10 fake=0.72
+held-out=asv_train L4         C=0.1   aug   AUC=0.399 EER=0.585 acc=0.487 real=0.18 fake=0.69
+held-out=asv_train L6         C=0.01  clean AUC=0.424 EER=0.569 acc=0.532 real=0.09 fake=0.86
+held-out=asv_train L6         C=0.01  aug   AUC=0.394 EER=0.590 acc=0.520 real=0.16 fake=0.76
+held-out=asv_train L6         C=0.1   clean AUC=0.436 EER=0.553 acc=0.521 real=0.11 fake=0.82
+held-out=asv_train L6         C=0.1   aug   AUC=0.398 EER=0.585 acc=0.512 real=0.18 fake=0.73
+held-out=asv_train L8         C=0.01  clean AUC=0.494 EER=0.530 acc=0.569 real=0.07 fake=0.94
+held-out=asv_train L8         C=0.01  aug   AUC=0.437 EER=0.551 acc=0.577 real=0.11 fake=0.88
+held-out=asv_train L8         C=0.1   clean AUC=0.517 EER=0.510 acc=0.565 real=0.09 fake=0.91
+held-out=asv_train L8         C=0.1   aug   AUC=0.454 EER=0.524 acc=0.569 real=0.12 fake=0.86
+held-out=asv_train L3+5+7     C=0.01  clean AUC=0.476 EER=0.546 acc=0.544 real=0.08 fake=0.88
+held-out=asv_train L3+5+7     C=0.01  aug   AUC=0.427 EER=0.565 acc=0.547 real=0.15 fake=0.81
+held-out=asv_train L3+5+7     C=0.1   clean AUC=0.492 EER=0.528 acc=0.545 real=0.10 fake=0.87
+held-out=asv_train L3+5+7     C=0.1   aug   AUC=0.443 EER=0.558 acc=0.546 real=0.16 fake=0.80
+held-out=asv_train L0-8 even  C=0.01  clean AUC=0.503 EER=0.510 acc=0.549 real=0.05 fake=0.92
+held-out=asv_train L0-8 even  C=0.01  aug   AUC=0.465 EER=0.529 acc=0.563 real=0.09 fake=0.88
+held-out=asv_train L0-8 even  C=0.1   clean AUC=0.502 EER=0.519 acc=0.546 real=0.07 fake=0.89
+held-out=asv_train L0-8 even  C=0.1   aug   AUC=0.462 EER=0.535 acc=0.555 real=0.10 fake=0.86
+held-out=asv_test  mean_all   C=0.01  clean AUC=0.925 EER=0.147 acc=0.850 real=0.87 fake=0.84
+held-out=asv_test  mean_all   C=0.01  aug   AUC=0.896 EER=0.171 acc=0.820 real=0.79 fake=0.84
+held-out=asv_test  mean_all   C=0.1   clean AUC=0.923 EER=0.155 acc=0.844 real=0.86 fake=0.83
+held-out=asv_test  mean_all   C=0.1   aug   AUC=0.891 EER=0.192 acc=0.817 real=0.80 fake=0.83
+held-out=asv_test  L2         C=0.01  clean AUC=0.900 EER=0.174 acc=0.824 real=0.86 fake=0.80
+held-out=asv_test  L2         C=0.01  aug   AUC=0.854 EER=0.202 acc=0.773 real=0.82 fake=0.75
+held-out=asv_test  L2         C=0.1   clean AUC=0.893 EER=0.186 acc=0.809 real=0.84 fake=0.79
+held-out=asv_test  L2         C=0.1   aug   AUC=0.846 EER=0.212 acc=0.759 real=0.82 fake=0.72
+held-out=asv_test  L4         C=0.01  clean AUC=0.931 EER=0.136 acc=0.863 real=0.86 fake=0.86
+held-out=asv_test  L4         C=0.01  aug   AUC=0.898 EER=0.176 acc=0.837 real=0.78 fake=0.87
+held-out=asv_test  L4         C=0.1   clean AUC=0.928 EER=0.145 acc=0.856 real=0.87 fake=0.85
+held-out=asv_test  L4         C=0.1   aug   AUC=0.889 EER=0.188 acc=0.829 real=0.79 fake=0.85
+held-out=asv_test  L6         C=0.01  clean AUC=0.919 EER=0.157 acc=0.848 real=0.86 fake=0.84
+held-out=asv_test  L6         C=0.01  aug   AUC=0.902 EER=0.158 acc=0.829 real=0.80 fake=0.85
+held-out=asv_test  L6         C=0.1   clean AUC=0.917 EER=0.160 acc=0.845 real=0.85 fake=0.84
+held-out=asv_test  L6         C=0.1   aug   AUC=0.900 EER=0.164 acc=0.837 real=0.80 fake=0.86
+held-out=asv_test  L8         C=0.01  clean AUC=0.925 EER=0.146 acc=0.856 real=0.86 fake=0.86
+held-out=asv_test  L8         C=0.01  aug   AUC=0.895 EER=0.180 acc=0.827 real=0.81 fake=0.84
+held-out=asv_test  L8         C=0.1   clean AUC=0.916 EER=0.153 acc=0.851 real=0.85 fake=0.86
+held-out=asv_test  L8         C=0.1   aug   AUC=0.885 EER=0.190 acc=0.824 real=0.78 fake=0.85
+held-out=asv_test  L3+5+7     C=0.01  clean AUC=0.942 EER=0.134 acc=0.861 real=0.87 fake=0.85
+held-out=asv_test  L3+5+7     C=0.01  aug   AUC=0.927 EER=0.138 acc=0.861 real=0.82 fake=0.88
+held-out=asv_test  L3+5+7     C=0.1   clean AUC=0.942 EER=0.135 acc=0.861 real=0.88 fake=0.85
+held-out=asv_test  L3+5+7     C=0.1   aug   AUC=0.929 EER=0.132 acc=0.868 real=0.85 fake=0.88
+held-out=asv_test  L0-8 even  C=0.01  clean AUC=0.932 EER=0.151 acc=0.858 real=0.90 fake=0.83
+held-out=asv_test  L0-8 even  C=0.01  aug   AUC=0.909 EER=0.156 acc=0.846 real=0.84 fake=0.85
+held-out=asv_test  L0-8 even  C=0.1   clean AUC=0.932 EER=0.148 acc=0.855 real=0.91 fake=0.82
+held-out=asv_test  L0-8 even  C=0.1   aug   AUC=0.910 EER=0.158 acc=0.841 real=0.85 fake=0.84

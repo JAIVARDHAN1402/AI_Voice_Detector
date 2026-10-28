@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+# datasets, extracted features and anything recorded from the user's own voice stay local
+data/
+# the 378 MB WavLM weights are downloaded, not committed (see README "Setup")
+models/wavlm-base-plus/pytorch_model.bin
+models/detector_base.joblib
