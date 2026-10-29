@@ -155,15 +155,55 @@ def prep_asvspoof(meta: Meta, split: str, max_bonafide: int, max_spoof: int, tag
     meta.save()
 
 
+def prep_asv5(meta: Meta, shards=(3, 41, 77, 110, 150, 190), groups_per_shard=5):
+    """ASVspoof 5 (2024) eval slice: modern TTS/VC attacks A17-A32 + 11 codec conditions + MLS audiobook bona fide."""
+    import json
+    import time
+    from huggingface_hub import HfFileSystem
+    meta.drop_dataset("asv5")
+    fs = HfFileSystem()
+    rng = np.random.default_rng(5)
+    nb = ns = 0
+    for sh in shards:
+        remote = f"datasets/SpeechAntiSpoofingBenchmarks/ASVspoof5/data/test-{sh:05d}-of-00200.parquet"
+        for attempt in range(5):
+            try:
+                with fs.open(remote, "rb", block_size=6 * 1024 * 1024) as fh:
+                    pf = pq.ParquetFile(fh)
+                    for g in rng.choice(pf.metadata.num_row_groups, groups_per_shard, replace=False):
+                        t = pf.read_row_group(int(g), columns=["label", "notes", "audio"])
+                        for lab, note, a in zip(t.column("label").to_pylist(), t.column("notes").to_pylist(),
+                                                t.column("audio").to_pylist()):
+                            d = json.loads(note)
+                            y = load_bytes(a["bytes"], ".flac")
+                            name = d["utterance_id"]
+                            p = save_clip(y, "asv5", name)
+                            if lab == 0:
+                                meta.add(path=p, label=0, dataset="asv5", group="mls_" + d["speaker_id"], system="real")
+                                nb += 1
+                            else:
+                                meta.add(path=p, label=1, dataset="asv5", group=d["attack_id"], system=d["attack_id"])
+                                ns += 1
+                        print(f"  shard {sh} row group {g}: bonafide={nb} spoof={ns}", flush=True)
+                        meta.save()
+                break
+            except Exception as e:  # noqa: BLE001  (network hiccups on long sessions)
+                print(f"  shard {sh} attempt {attempt} failed: {type(e).__name__}; retrying", flush=True)
+                time.sleep(3)
+    meta.save()
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=["gary", "unidata", "asv_train", "asv_val", "asv_test"])
+    ap.add_argument("what", choices=["gary", "unidata", "asv_train", "asv_val", "asv_test", "asv5"])
     ap.add_argument("--bonafide", type=int, default=1000)
     ap.add_argument("--spoof", type=int, default=1500)
     a = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     m = Meta()
-    if a.what == "gary":
+    if a.what == "asv5":
+        prep_asv5(m)
+    elif a.what == "gary":
         prep_garystafford(m)
     elif a.what == "unidata":
         prep_unidata(m)

@@ -21,7 +21,7 @@ from voicedetect.audio import SR, load_file, windows  # noqa: E402
 from voicedetect.augment import replay  # noqa: E402
 from voicedetect.features import Embedder  # noqa: E402
 
-CAPS = {"gary": (500, 800), "unidata": (500, 800), "asv_train": (600, 800), "asv_test": (300, 450)}   # as used for the clean features
+CAPS = {"gary": (500, 800), "unidata": (500, 800), "asv_train": (600, 800), "asv_test": (300, 450), "asv5": (500, 960)}   # as used for the clean features
 FRAC = 0.5
 CHUNK = 150
 

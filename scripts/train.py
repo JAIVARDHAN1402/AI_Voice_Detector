@@ -20,7 +20,8 @@ ROOT = Path(__file__).resolve().parents[1]
 FEAT = ROOT / "data" / "features"
 REPORTS = ROOT / "reports"
 MODELS = ROOT / "models"
-TRAIN_SETS = ["gary", "unidata", "asv_train", "cv", "libri"]
+TRAIN_SETS = ["gary", "unidata", "asv_train", "cv", "libri", "asv5"]
+HOLD_ATTACKS = {"A29", "A30", "A31", "A32"}   # ASVspoof 5 systems held out entirely in the evaluation fit
 EXTRA_SETS = ["asv_test"]          # unseen speakers + unseen attack systems (A07-A19)
 USE_REPLAY = True                  # include speaker->room->mic degraded samples when their features exist
 
@@ -158,6 +159,10 @@ def split_holdout(d, name, frac=0.2, seed=0):
 def final(layers, C):
     data = {n: load(n) for n in available(TRAIN_SETS + EXTRA_SETS)}
     parts = {n: split_holdout(data[n], n) for n in available(TRAIN_SETS)}
+    if "asv5" in parts:                        # attack systems A29-A32 are never trained on in the evaluation fit
+        tr, te = parts["asv5"]
+        hold = np.isin(tr["system"], list(HOLD_ATTACKS))
+        parts["asv5"] = (take(tr, ~hold), concat([te, take(tr, hold)]))
     train = concat([p[0] for p in parts.values()])
     clf = fit(train, layers, C)
 
@@ -190,6 +195,17 @@ def final(layers, C):
         p = predict(clf, d, layers)
         report["asv_test_per_system_fake_detection"] = {
             s: float((p[(d["system"] == s)] >= thr).mean()) for s in sorted(set(d["system"])) if s != "real"}
+
+    if "asv5" in parts:                        # modern attacks: held-out clips of seen systems vs. never-seen systems A29-A32
+        te = parts["asv5"][1]
+        fake = te["y"] == 1
+        pr = predict(clf, te, layers)
+        report["asv5_per_attack_fake_detection"] = {
+            s + (" (never trained on)" if s in HOLD_ATTACKS else ""): float((pr[fake & (te["system"] == s)] >= thr).mean())
+            for s in sorted(set(te["system"][fake]))}
+        for lab, sel in (("seen systems", ~np.isin(te["system"], list(HOLD_ATTACKS))), ("unseen systems A29-A32", np.isin(te["system"], list(HOLD_ATTACKS)))):
+            m = fake & sel
+            report["asv5_fake_detection_" + lab.split()[0]] = float((pr[m] >= thr).mean())
 
     # refit on every training sample (including the held-out parts and the unseen-attack set) for deployment
     full = concat([data[n] for n in data])

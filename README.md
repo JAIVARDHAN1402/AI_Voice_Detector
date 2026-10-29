@@ -42,7 +42,7 @@ test audio pushed through MP3/AAC/Opus codecs, noise, reverb or band-limiting (c
 | ASVspoof 2019 (known attacks, new speakers) | 98.7 % | 95.7 % |
 | **ASVspoof 2019 — attacks A07–A19 never trained on** | **86.0 %** (AUC 0.94) | 82.2 % |
 
-Pooled over all held-out sets: 90.9 % accuracy, 9.1 % equal-error-rate, AUC 0.97.
+(Numbers in this first table are from the earlier model; the sections below cover the current one: pooled held-out 88.6 % accuracy, AUC 0.955 across clean, augmented and replay audio.)
 
 **A separate check with generators and speakers that never touched training or threshold selection**
 (`scripts/ood_check.py`):
@@ -54,6 +54,26 @@ Pooled over all held-out sets: 90.9 % accuracy, 9.1 % equal-error-rate, AUC 0.97
 | Fake: Google TTS (5 accents) | 100 % | 0 % | 0 % |
 
 Re-encoded as WebM/Opus 32 kbps (what a browser microphone produces): real 79 / 8 / 12 %, both fake sets 100 %.
+
+### Modern generators (ASVspoof 5, 2024)
+
+Real-world feedback: "AI voices are read as real". Measuring it on ASVspoof 5 (16 modern TTS/voice-conversion systems,
+11 codec conditions, audiobook bona fide) showed why: the earlier model caught only **66 %** of modern AI clips on clean audio,
+**43 %** after speaker->mic degradation, and some systems barely at all (A30 24 %, A32 28 %).
+Adding a 2,900-clip ASVspoof 5 slice (and degraded copies) to training changed that on held-out clips:
+
+| ASVspoof 5, held-out | Before | After |
+|---|---|---|
+| AI detected, clean | 66 % | 93 % |
+| AI detected, speaker->mic replay | 43 % | 78 % |
+| AI detected on 4 systems never trained on (A29-A32) | 24-90 % (mean ~50 %) | 87-91 % |
+| Real voices kept as real (clean) | 72 % | 91 % |
+
+Independent check (never used in training): unseen LibriSpeech readers 92 % correct / 4 % wrong (was 81 % / 10 %);
+Windows and Google TTS still 100 %. Caveats: ASVspoof speakers can appear in both train and test (as AI vs bona fide),
+which flatters the held-out numbers somewhat, and today's commercial systems (ElevenLabs v3, ChatGPT/Gemini voices,
+cloning services) are newer than 2024 research systems - expect misses there. Heavily re-recorded audio is still ~50 % for
+older-style generators.
 
 ### Speaker-to-microphone ("replay") audio
 
@@ -97,6 +117,7 @@ reliable fix is to record your own speaker/room/mic setup in the app's "Teach it
 | `asv_train` / `asv_test` — [ASVspoof 2019 LA](https://huggingface.co/datasets/Bisher/ASVspoof_2019_LA) | VCTK studio speech | attacks A01–A06 (train) / A07–A19 (test) | 1,400 / 750 |
 | `unidata` — [UniDataPro real-vs-fake](https://huggingface.co/datasets/UniDataPro/real-vs-fake-human-voice-deepfake-audio) | phone-style recordings | synthetic clones | 80 |
 | `cv` — [Common Voice 17 (en)](https://huggingface.co/datasets/fixie-ai/common_voice_17_0) | 420 volunteer clips, 368 speakers | same sentences via 47 Microsoft neural voices (`edge-tts`) | 839 |
+| `asv5` — [ASVspoof 5 eval](https://huggingface.co/datasets/SpeechAntiSpoofingBenchmarks/ASVspoof5) | MLS audiobook speakers | modern TTS/VC attacks A17-A32, 11 codecs | 1,460 |
 | `libri` — [LibriSpeech train-clean-100](https://huggingface.co/datasets/openslr/librispeech_asr) | 20 readers | same text via `edge-tts` | 481 |
 
 The neural-TTS fakes (`cv`, `libri`) are generated with the `edge-tts` package, which sends the sentence text to
