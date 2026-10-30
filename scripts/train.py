@@ -21,11 +21,13 @@ ROOT = Path(__file__).resolve().parents[1]
 FEAT = ROOT / "data" / "features"
 REPORTS = ROOT / "reports"
 MODELS = ROOT / "models"
-TRAIN_SETS = ["gary", "unidata", "asv_train", "cv", "libri", "asv5", "mlaad"]
+TRAIN_SETS = ["gary", "unidata", "asv_train", "cv", "libri", "asv5", "mlaad", "chatgpt"]
 HEAD = "mlp"                       # "mlp" (one 256-unit hidden layer) or "linear" (logistic regression)
 # newest TTS systems in MLAAD held out entirely from the evaluation fit (honest "never seen this generator" test)
 HOLD_TTS = {"Cartesia.ai_Sonic-3_", "Higgs-Audio-V2", "Microsoft_VibeVoice_Large", "Index-TTS-2.0", "DeepGram", "sesame_csm",
             "Chatterbox", "minimax_speech-2.6-hd", "Qwen2.5-Omni", "Maya1_TTS", "Kyutai-TTS", "SoulX-Podcast"}
+HOLD_GPT = {"gpt4o_tts_onyx", "gpt4o_tts_shimmer", "chatgpt_app_juniper"}   # OpenAI / ChatGPT voices held out of the evaluation fit
+FAKE_ONLY = {"mlaad": HOLD_TTS, "chatgpt": HOLD_GPT}   # fake-only sets: hold out whole generators + 20% of clips of the others
 HOLD_ATTACKS = {"A29", "A30", "A31", "A32"}   # ASVspoof 5 systems held out entirely in the evaluation fit
 EXTRA_SETS = ["asv_test"]          # unseen speakers + unseen attack systems (A07-A19)
 USE_REPLAY = True                  # include speaker->room->mic degraded samples when their features exist
@@ -169,14 +171,15 @@ def split_holdout(d, name, frac=0.2, seed=0):
 
 def final(layers, C):
     data = {n: load(n) for n in available(TRAIN_SETS + EXTRA_SETS)}
-    parts = {n: split_holdout(data[n], n) for n in available(TRAIN_SETS) if n != "mlaad"}
-    if "mlaad" in data:                        # fake-only set: hold out whole generators + 20% of clips of the others
-        d = data["mlaad"]
-        rng = np.random.default_rng(3)
-        clips = np.unique(d["clip"])
-        test_c = set(rng.choice(clips, int(len(clips) * 0.2), replace=False))
-        te = np.isin(d["clip"], list(test_c)) | np.isin(d["system"], list(HOLD_TTS))
-        parts["mlaad"] = (take(d, ~te), take(d, te))
+    parts = {n: split_holdout(data[n], n) for n in available(TRAIN_SETS) if n not in FAKE_ONLY}
+    for n, hold_sys in FAKE_ONLY.items():
+        if n in data:
+            d = data[n]
+            rng = np.random.default_rng(3)
+            clips = np.unique(d["clip"])
+            test_c = set(rng.choice(clips, int(len(clips) * 0.2), replace=False))
+            te = np.isin(d["clip"], list(test_c)) | np.isin(d["system"], list(hold_sys))
+            parts[n] = (take(d, ~te), take(d, te))
     if "asv5" in parts:                        # attack systems A29-A32 are never trained on in the evaluation fit
         tr, te = parts["asv5"]
         hold = np.isin(tr["system"], list(HOLD_ATTACKS))
@@ -235,6 +238,15 @@ def final(layers, C):
         unseen = np.isin(te["system"], list(HOLD_TTS))
         report["mlaad_detection_seen_generators"] = float(det[~unseen].mean())
         report["mlaad_detection_unseen_generators"] = float(det[unseen].mean())
+
+    if "chatgpt" in parts:                     # OpenAI / ChatGPT voices: per voice, held-out clips and never-trained voices
+        te = parts["chatgpt"][1]
+        det = predict(clf, te, layers) >= thr
+        report["chatgpt_per_voice_detection"] = {
+            s_ + (" (never trained on)" if s_ in HOLD_GPT else ""): float(det[te["system"] == s_].mean()) for s_ in sorted(set(te["system"]))}
+        unseen = np.isin(te["system"], list(HOLD_GPT))
+        report["chatgpt_detection_seen_voices"] = float(det[~unseen].mean())
+        report["chatgpt_detection_unseen_voices"] = float(det[unseen].mean())
 
     # Verdict policy from held-out scores (calibrated P(AI) = sigmoid(logit(p) - logit(thr))): call "real" only if few
     # held-out AI windows score that low, and "ai" only if few held-out real windows score that high.

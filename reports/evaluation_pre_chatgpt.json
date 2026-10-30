@@ -1,0 +1,300 @@
+{
+  "layers": [
+    2,
+    3,
+    5,
+    7
+  ],
+  "C": 0.05,
+  "train_samples": 14055,
+  "eval": {
+    "gary (held-out speakers/recordings) / clean": {
+      "n": 353,
+      "auc": 0.9967440361057383,
+      "eer": 0.025419084461637674,
+      "acc": 0.9461756373937678,
+      "real_acc": 0.9042553191489362,
+      "fake_acc": 0.9939393939393939
+    },
+    "gary (held-out speakers/recordings) / augmented": {
+      "n": 180,
+      "auc": 0.9650574144956168,
+      "eer": 0.11112483022595385,
+      "acc": 0.8611111111111112,
+      "real_acc": 0.7640449438202247,
+      "fake_acc": 0.9560439560439561
+    },
+    "gary (held-out speakers/recordings) / replay (speaker->room->mic)": {
+      "n": 183,
+      "auc": 0.9259170462718772,
+      "eer": 0.12131383361304245,
+      "acc": 0.8032786885245902,
+      "real_acc": 0.6804123711340206,
+      "fake_acc": 0.9418604651162791
+    },
+    "unidata (held-out speakers/recordings) / clean": {
+      "n": 32,
+      "auc": 1.0,
+      "eer": 0.0,
+      "acc": 0.96875,
+      "real_acc": 1.0,
+      "fake_acc": 0.9583333333333334
+    },
+    "unidata (held-out speakers/recordings) / augmented": {
+      "n": 17,
+      "auc": 1.0,
+      "eer": 0.0,
+      "acc": 0.8823529411764706,
+      "real_acc": 1.0,
+      "fake_acc": 0.8571428571428571
+    },
+    "unidata (held-out speakers/recordings) / replay (speaker->room->mic)": {
+      "n": 14,
+      "auc": 0.48888888888888893,
+      "eer": 0.5777777777777777,
+      "acc": 0.42857142857142855,
+      "real_acc": 0.4,
+      "fake_acc": 0.4444444444444444
+    },
+    "asv_train (held-out speakers/recordings) / clean": {
+      "n": 319,
+      "auc": 1.0,
+      "eer": 0.0,
+      "acc": 1.0,
+      "real_acc": 1.0,
+      "fake_acc": 1.0
+    },
+    "asv_train (held-out speakers/recordings) / augmented": {
+      "n": 163,
+      "auc": 0.9978787878787878,
+      "eer": 0.01803030303030302,
+      "acc": 0.9754601226993865,
+      "real_acc": 0.9866666666666667,
+      "fake_acc": 0.9659090909090909
+    },
+    "asv_train (held-out speakers/recordings) / replay (speaker->room->mic)": {
+      "n": 168,
+      "auc": 0.9692067546473677,
+      "eer": 0.08918688803746275,
+      "acc": 0.9107142857142857,
+      "real_acc": 0.9259259259259259,
+      "fake_acc": 0.896551724137931
+    },
+    "cv (held-out speakers/recordings) / clean": {
+      "n": 190,
+      "auc": 0.9997763864042933,
+      "eer": 0.01542933810375672,
+      "acc": 0.9789473684210527,
+      "real_acc": 0.9615384615384616,
+      "fake_acc": 1.0
+    },
+    "cv (held-out speakers/recordings) / augmented": {
+      "n": 102,
+      "auc": 0.9919261822376009,
+      "eer": 0.039215686274509824,
+      "acc": 0.9411764705882353,
+      "real_acc": 0.9019607843137255,
+      "fake_acc": 0.9803921568627451
+    },
+    "cv (held-out speakers/recordings) / replay (speaker->room->mic)": {
+      "n": 103,
+      "auc": 0.9778794813119757,
+      "eer": 0.0676964149504195,
+      "acc": 0.912621359223301,
+      "real_acc": 0.8771929824561403,
+      "fake_acc": 0.9565217391304348
+    },
+    "libri (held-out speakers/recordings) / clean": {
+      "n": 161,
+      "auc": 0.9949809622706819,
+      "eer": 0.01860505365178261,
+      "acc": 0.9565217391304348,
+      "real_acc": 0.9439252336448598,
+      "fake_acc": 0.9814814814814815
+    },
+    "libri (held-out speakers/recordings) / augmented": {
+      "n": 83,
+      "auc": 0.9788359788359788,
+      "eer": 0.018518518518518545,
+      "acc": 0.891566265060241,
+      "real_acc": 0.8571428571428571,
+      "fake_acc": 0.9629629629629629
+    },
+    "libri (held-out speakers/recordings) / replay (speaker->room->mic)": {
+      "n": 81,
+      "auc": 0.9085714285714286,
+      "eer": 0.15142857142857144,
+      "acc": 0.7407407407407407,
+      "real_acc": 0.6428571428571429,
+      "fake_acc": 0.96
+    },
+    "asv5 (held-out speakers/recordings) / clean": {
+      "n": 807,
+      "auc": 0.9865420998225117,
+      "eer": 0.05074018450976184,
+      "acc": 0.9603469640644362,
+      "real_acc": 0.9367088607594937,
+      "fake_acc": 0.9661016949152542
+    },
+    "asv5 (held-out speakers/recordings) / augmented": {
+      "n": 407,
+      "auc": 0.9513981853339284,
+      "eer": 0.12196935891715008,
+      "acc": 0.8943488943488943,
+      "real_acc": 0.8072289156626506,
+      "fake_acc": 0.9166666666666666
+    },
+    "asv5 (held-out speakers/recordings) / replay (speaker->room->mic)": {
+      "n": 431,
+      "auc": 0.8139923762945914,
+      "eer": 0.24874136939010355,
+      "acc": 0.8074245939675174,
+      "real_acc": 0.6329113924050633,
+      "fake_acc": 0.8465909090909091
+    },
+    "asv_test (unseen attacks + speakers) / clean": {
+      "n": 794,
+      "auc": 0.9746093880023701,
+      "eer": 0.08320851058164072,
+      "acc": 0.9080604534005038,
+      "real_acc": 0.9742765273311897,
+      "fake_acc": 0.865424430641822
+    },
+    "asv_test (unseen attacks + speakers) / augmented": {
+      "n": 410,
+      "auc": 0.9574040586698814,
+      "eer": 0.10736889692585894,
+      "acc": 0.8731707317073171,
+      "real_acc": 0.9683544303797469,
+      "fake_acc": 0.8134920634920635
+    },
+    "asv_test (unseen attacks + speakers) / replay (speaker->room->mic)": {
+      "n": 407,
+      "auc": 0.9275384694560239,
+      "eer": 0.14996654829910966,
+      "acc": 0.8476658476658476,
+      "real_acc": 0.9281045751633987,
+      "fake_acc": 0.7992125984251969
+    }
+  },
+  "pooled": {
+    "n": 7082,
+    "auc": 0.9631685865636546,
+    "eer": 0.10131847208005051,
+    "acc": 0.8986162101101384,
+    "real_acc": 0.898838334946757,
+    "fake_acc": 0.898524720893142,
+    "threshold": 0.6799229979515076
+  },
+  "asv_test_per_system_fake_detection": {
+    "A07": 0.9857142857142858,
+    "A08": 1.0,
+    "A09": 1.0,
+    "A10": 0.8732394366197183,
+    "A11": 1.0,
+    "A12": 0.8313253012048193,
+    "A13": 0.881578947368421,
+    "A14": 0.974025974025974,
+    "A15": 1.0,
+    "A16": 0.875,
+    "A17": 0.5753424657534246,
+    "A18": 0.4084507042253521,
+    "A19": 0.296875
+  },
+  "asv5_per_attack_fake_detection": {
+    "A17": 0.7368421052631579,
+    "A18": 0.96,
+    "A19": 0.7857142857142857,
+    "A20": 0.9761904761904762,
+    "A21": 0.9821428571428571,
+    "A22": 0.9230769230769231,
+    "A23": 0.9333333333333333,
+    "A24": 0.8888888888888888,
+    "A25": 0.864406779661017,
+    "A26": 0.9545454545454546,
+    "A27": 1.0,
+    "A28": 0.7391304347826086,
+    "A29 (never trained on)": 0.9611650485436893,
+    "A30 (never trained on)": 0.9859154929577465,
+    "A31 (never trained on)": 0.8605769230769231,
+    "A32 (never trained on)": 0.9507389162561576
+  },
+  "asv5_fake_detection_seen": 0.8929292929292929,
+  "asv5_fake_detection_unseen": 0.9397590361445783,
+  "mlaad_per_system_detection": {
+    "MegaTTS3": 0.3333333333333333,
+    "Llasa-8B": 0.6363636363636364,
+    "parler_tts_mini_v0.1": 0.6363636363636364,
+    "suno_bark-small": 0.6363636363636364,
+    "zonosTTS-v0.1": 0.6666666666666666,
+    "Kyutai-TTS (never trained on)": 0.6986301369863014,
+    "Kani-TTS-370M": 0.7142857142857143,
+    "sesame_csm (never trained on)": 0.7205882352941176,
+    "Cartesia.ai_Sonic-3_ (never trained on)": 0.7532467532467533,
+    "suno_bark": 0.76,
+    "minimax_speech-2.6-hd (never trained on)": 0.7763157894736842,
+    "Microsoft_VibeVoice_1.5B": 0.7777777777777778,
+    "griffin_lim": 0.7857142857142857,
+    "RVC": 0.8,
+    "Spark-TTS-0.5B": 0.8125,
+    "DeepGram (never trained on)": 0.8289473684210527,
+    "Qwen2.5-Omni (never trained on)": 0.8292682926829268,
+    "f5-tts": 0.8333333333333334,
+    "optispeech": 0.8333333333333334,
+    "minimax_speech-02-turbo": 0.8461538461538461,
+    "Metavoice-1B": 0.8666666666666667,
+    "ZipVoice": 0.8695652173913043,
+    "Nari_Dia-1.6B": 0.875,
+    "OuteTTS": 0.8888888888888888,
+    "Microsoft_VibeVoice_Large (never trained on)": 0.8947368421052632,
+    "microsoft_speecht5_tts": 0.9,
+    "FireRedTTS-2.0": 0.9166666666666666,
+    "Indri-TTS-0.1": 0.9166666666666666,
+    "parler_tts_large_v1": 0.9166666666666666,
+    "vixTTS": 0.9230769230769231,
+    "Chatterbox (never trained on)": 0.9333333333333333,
+    "Marvis-TTS": 0.9333333333333333,
+    "Index-TTS-2.0 (never trained on)": 0.9375,
+    "orpheus-tts-0.1-finetune": 0.9375,
+    "Step-Audio-EditX": 0.9473684210526315,
+    "FishTTS": 0.9523809523809523,
+    "VoxCPM-0.5B": 0.9545454545454546,
+    "Resemble.ai_April_12th_2025_": 0.9615384615384616,
+    "WhisperSpeech": 0.9615384615384616,
+    "SoulX-Podcast (never trained on)": 0.9625,
+    "Maya1_TTS (never trained on)": 0.9672131147540983,
+    "Higgs-Audio-V2 (never trained on)": 0.9859154929577465,
+    "Edge-TTS": 1.0,
+    "Index-TTS-1.5": 1.0,
+    "Kitten-TTS-Nano-0.1": 1.0,
+    "Kitten-TTS-Nano-0.2": 1.0,
+    "Llasa-1B-Multilingual": 1.0,
+    "Mars5": 1.0,
+    "MatchaTTS": 1.0,
+    "MeloTTS": 1.0,
+    "MiniCPM-o-2.6": 1.0,
+    "Nari_Dia2": 1.0,
+    "NeuTTS-Air": 1.0,
+    "OpenVoiceV2": 1.0,
+    "Openaudio-S1-Mini": 1.0,
+    "Ringg_Squirrel_TTS_v1.0": 1.0,
+    "Supertonic": 1.0,
+    "Veena": 1.0,
+    "VoxCPM-1.5": 1.0,
+    "Voxtream": 1.0,
+    "e2-tts": 1.0,
+    "facebook_mms-tts-eng": 1.0,
+    "kokoro": 1.0,
+    "parler_tts_mini_v1": 1.0
+  },
+  "mlaad_detection_seen_generators": 0.8976982097186701,
+  "mlaad_detection_unseen_generators": 0.8569832402234637,
+  "policy": {
+    "real_max": 0.27286580883529843,
+    "ai_min": 0.7024436818493751,
+    "ai_called_real_at_policy": 0.08014354066985646,
+    "real_called_ai_at_policy": 0.0803484995159729,
+    "real_called_real_at_policy": 0.8630203291384317,
+    "ai_called_ai_at_policy": 0.8716108452950558
+  }
+}

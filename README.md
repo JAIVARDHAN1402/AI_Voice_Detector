@@ -74,6 +74,15 @@ scores rather than a fixed margin.
 | Real voices called real / AI called AI | 86 % / 87 % |
 | Independent check: unseen LibriSpeech readers correct / wrong; Windows + Google TTS | 88 % / 10 %; 100 % |
 
+### ChatGPT / OpenAI voices
+
+Training also includes ~1,000 clips of OpenAI voices (`scripts/prepare_chatgpt.py`: GPT-4o TTS alloy/echo/fable/nova/onyx/shimmer,
+gpt-4o-mini-tts, and clean reads of the ChatGPT app voices Juniper and Sky; the app's screen recordings are not used because they may
+contain the user's own voice). The previous model already caught 98 % of these as plain files but only 76 % after a simulated
+speaker-to-microphone pass. Held out: voices trained on 99 %, voices never trained on (onyx, shimmer, app Juniper) 91 % (Juniper alone 81 %).
+ChatGPT *voice mode* streamed through a phone or speaker is not in the data (no public recordings), so it can still score low; use the
+"Teach it" tab plus `scripts/tune_user.py` for that.
+
 Weakest generators: MegaTTS3 33%, Llasa-8B 64%, parler_tts_mini_v0.1 64%, suno_bark-small 64%, zonosTTS-v0.1 67%, Kyutai-TTS* 70%, Kani-TTS-370M 71%, sesame_csm* 72% (* never trained on). Real voices are flagged as AI a bit more often than before (unseen LibriSpeech
 4 % -> 10 %): that is the price of catching more modern AI. The browser version uses an int8-shrunk backbone, so borderline clips can
 read differently from the local Python app (about 3 % of individual 3 s segments flip).
@@ -142,6 +151,7 @@ reliable fix is to record your own speaker/room/mic setup in the app's "Teach it
 | `cv` — [Common Voice 17 (en)](https://huggingface.co/datasets/fixie-ai/common_voice_17_0) | 420 volunteer clips, 368 speakers | same sentences via 47 Microsoft neural voices (`edge-tts`) | 839 |
 | `asv5` — [ASVspoof 5 eval](https://huggingface.co/datasets/SpeechAntiSpoofingBenchmarks/ASVspoof5) | MLS audiobook speakers | modern TTS/VC attacks A17-A32, 11 codecs | 1,460 |
 | `mlaad` — [MLAAD-tiny](https://huggingface.co/datasets/mueller91/MLAAD-tiny) | (fake only; real from the sets above) | 64 recent TTS/cloning systems | 1,493 |
+| `chatgpt` — [GPT-4o TTS voices](https://huggingface.co/datasets/ata990/AdvBench-Audio-GPT4o-TTS), [gpt-4o-mini-tts](https://huggingface.co/datasets/LALM-emotional-damage/gpt-4o-mini-tts), [ChatGPT app voices](https://huggingface.co/datasets/leafspark/openai-voices) | (fake only) | OpenAI / ChatGPT voices (alloy, echo, fable, nova, onyx, shimmer, Juniper, Sky) | 1,013 |
 | `libri` — [LibriSpeech train-clean-100](https://huggingface.co/datasets/openslr/librispeech_asr) | 20 readers | same text via `edge-tts` | 481 |
 
 The neural-TTS fakes (`cv`, `libri`) are generated with the `edge-tts` package, which sends the sentence text to
