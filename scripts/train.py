@@ -253,7 +253,7 @@ def final(layers, C):
     lg = lambda q: np.log(np.clip(q, 1e-4, 1 - 1e-4) / (1 - np.clip(q, 1e-4, 1 - 1e-4)))  # noqa: E731
     calib = 1 / (1 + np.exp(-(lg(pp) - lg(thr))))
     real_max = float(np.clip(np.quantile(calib[yy == 1], 0.08), 0.03, 0.45))
-    ai_min = float(np.clip(np.quantile(calib[yy == 0], 0.92), 0.55, 0.97))
+    ai_min = 0.5   # chosen by hand: the calibrated threshold itself (the quantile policy gave ~0.7 and left real ChatGPT audio "uncertain")
     report["policy"] = {"real_max": real_max, "ai_min": ai_min,
                         "ai_called_real_at_policy": float((calib[yy == 1] <= real_max).mean()),
                         "real_called_ai_at_policy": float((calib[yy == 0] >= ai_min).mean()),
