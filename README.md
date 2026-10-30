@@ -70,9 +70,16 @@ scores rather than a fixed margin.
 | AI detected on generators trained on (held-out clips) | 90 % |
 | **AI detected on 12 newest generators never trained on** (Cartesia Sonic-3, Higgs-Audio-V2, VibeVoice Large, Index-TTS-2.0, DeepGram, Sesame, Chatterbox, MiniMax 2.6, Qwen2.5-Omni, Maya1, Kyutai, SoulX) | **86 %** |
 | ASVspoof 5 clean / never-trained systems A29-A32 | 96 % / 94 % |
-| Verdict policy on held-out windows: AI called "real" / real called "AI" | 8 % / 8 % |
+| Verdict policy on held-out windows: AI called "real" / real called "AI" | 8 % / 8 % (see note below: "AI" band now starts at 0.50) |
 | Real voices called real / AI called AI | 86 % / 87 % |
 | Independent check: unseen LibriSpeech readers correct / wrong; Windows + Google TTS | 88 % / 10 %; 100 % |
+
+### Verdict band (user-lowered)
+
+After testing real ChatGPT voice audio that scored 41-53 % and stayed "uncertain", the "AI" boundary (`ai_min`) was lowered by hand
+from 0.707 to **0.50** in `models/detector.joblib` / `web/model/classifier.json` (re-run `scripts/export_classifier.py` after changing it;
+`train.py final` recomputes it from quantiles, so set it again after a retrain). `real_max` stays 0.281, so 0.28-0.50 is "uncertain".
+Held-out cost: real windows called AI rise from ~8 % to ~10.5 %; AI windows called AI rise from 87 % to ~89.5 %.
 
 ### ChatGPT / OpenAI voices
 
