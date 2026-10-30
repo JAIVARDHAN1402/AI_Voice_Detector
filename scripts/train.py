@@ -13,6 +13,7 @@ import joblib
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -20,7 +21,11 @@ ROOT = Path(__file__).resolve().parents[1]
 FEAT = ROOT / "data" / "features"
 REPORTS = ROOT / "reports"
 MODELS = ROOT / "models"
-TRAIN_SETS = ["gary", "unidata", "asv_train", "cv", "libri", "asv5"]
+TRAIN_SETS = ["gary", "unidata", "asv_train", "cv", "libri", "asv5", "mlaad"]
+HEAD = "mlp"                       # "mlp" (one 256-unit hidden layer) or "linear" (logistic regression)
+# newest TTS systems in MLAAD held out entirely from the evaluation fit (honest "never seen this generator" test)
+HOLD_TTS = {"Cartesia.ai_Sonic-3_", "Higgs-Audio-V2", "Microsoft_VibeVoice_Large", "Index-TTS-2.0", "DeepGram", "sesame_csm",
+            "Chatterbox", "minimax_speech-2.6-hd", "Qwen2.5-Omni", "Maya1_TTS", "Kyutai-TTS", "SoulX-Podcast"}
 HOLD_ATTACKS = {"A29", "A30", "A31", "A32"}   # ASVspoof 5 systems held out entirely in the evaluation fit
 EXTRA_SETS = ["asv_test"]          # unseen speakers + unseen attack systems (A07-A19)
 USE_REPLAY = True                  # include speaker->room->mic degraded samples when their features exist
@@ -97,13 +102,19 @@ def feats(X, layers):
 
 
 def make_clf(C):
+    if HEAD == "mlp":
+        return make_pipeline(StandardScaler(), MLPClassifier((256,), alpha=0.05, early_stopping=True, n_iter_no_change=6,
+                                                             max_iter=80, random_state=0))
     return make_pipeline(StandardScaler(), LogisticRegression(C=C, max_iter=3000))
 
 
-def fit(d, layers, C):
-    clf = make_clf(C)
-    clf.fit(feats(d["X"], layers), d["y"], logisticregression__sample_weight=cell_weights(d["ds"], d["y"]))
+def fit_weighted(clf, X, y, w):
+    clf.fit(X, y, **{f"{clf.steps[-1][0]}__sample_weight": w})
     return clf
+
+
+def fit(d, layers, C):
+    return fit_weighted(make_clf(C), feats(d["X"], layers), d["y"], cell_weights(d["ds"], d["y"]))
 
 
 def predict(clf, d, layers):
@@ -158,7 +169,14 @@ def split_holdout(d, name, frac=0.2, seed=0):
 
 def final(layers, C):
     data = {n: load(n) for n in available(TRAIN_SETS + EXTRA_SETS)}
-    parts = {n: split_holdout(data[n], n) for n in available(TRAIN_SETS)}
+    parts = {n: split_holdout(data[n], n) for n in available(TRAIN_SETS) if n != "mlaad"}
+    if "mlaad" in data:                        # fake-only set: hold out whole generators + 20% of clips of the others
+        d = data["mlaad"]
+        rng = np.random.default_rng(3)
+        clips = np.unique(d["clip"])
+        test_c = set(rng.choice(clips, int(len(clips) * 0.2), replace=False))
+        te = np.isin(d["clip"], list(test_c)) | np.isin(d["system"], list(HOLD_TTS))
+        parts["mlaad"] = (take(d, ~te), take(d, te))
     if "asv5" in parts:                        # attack systems A29-A32 are never trained on in the evaluation fit
         tr, te = parts["asv5"]
         hold = np.isin(tr["system"], list(HOLD_ATTACKS))
@@ -207,6 +225,29 @@ def final(layers, C):
             m = fake & sel
             report["asv5_fake_detection_" + lab.split()[0]] = float((pr[m] >= thr).mean())
 
+    if "mlaad" in parts:                       # recent TTS systems: detection per generator on held-out clips / generators
+        te = parts["mlaad"][1]
+        pr = predict(clf, te, layers)
+        det = pr >= thr
+        rows = {s_ + (" (never trained on)" if s_ in HOLD_TTS else ""): float(det[te["system"] == s_].mean())
+                for s_ in sorted(set(te["system"]))}
+        report["mlaad_per_system_detection"] = dict(sorted(rows.items(), key=lambda kv: kv[1]))
+        unseen = np.isin(te["system"], list(HOLD_TTS))
+        report["mlaad_detection_seen_generators"] = float(det[~unseen].mean())
+        report["mlaad_detection_unseen_generators"] = float(det[unseen].mean())
+
+    # Verdict policy from held-out scores (calibrated P(AI) = sigmoid(logit(p) - logit(thr))): call "real" only if few
+    # held-out AI windows score that low, and "ai" only if few held-out real windows score that high.
+    lg = lambda q: np.log(np.clip(q, 1e-4, 1 - 1e-4) / (1 - np.clip(q, 1e-4, 1 - 1e-4)))  # noqa: E731
+    calib = 1 / (1 + np.exp(-(lg(pp) - lg(thr))))
+    real_max = float(np.clip(np.quantile(calib[yy == 1], 0.08), 0.03, 0.45))
+    ai_min = float(np.clip(np.quantile(calib[yy == 0], 0.92), 0.55, 0.97))
+    report["policy"] = {"real_max": real_max, "ai_min": ai_min,
+                        "ai_called_real_at_policy": float((calib[yy == 1] <= real_max).mean()),
+                        "real_called_ai_at_policy": float((calib[yy == 0] >= ai_min).mean()),
+                        "real_called_real_at_policy": float((calib[yy == 0] <= real_max).mean()),
+                        "ai_called_ai_at_policy": float((calib[yy == 1] >= ai_min).mean())}
+
     # refit on every training sample (including the held-out parts and the unseen-attack set) for deployment
     full = concat([data[n] for n in data])
     clf_full = fit(full, layers, C)
@@ -227,6 +268,7 @@ if __name__ == "__main__":
         MODELS.mkdir(exist_ok=True)
         (REPORTS / "evaluation.json").write_text(json.dumps(report, indent=2))
         joblib.dump({"clf": clf, "layers": a.layers, "threshold": float(thr), "unsure_margin": 0.15,
-                     "meta": {"backbone": "microsoft/wavlm-base-plus (8 layers)", "datasets": TRAIN_SETS + EXTRA_SETS,
+                     "real_max": report["policy"]["real_max"], "ai_min": report["policy"]["ai_min"],
+                     "meta": {"head": HEAD, "backbone": "microsoft/wavlm-base-plus (8 layers)", "datasets": TRAIN_SETS + EXTRA_SETS,
                               "pooled_eer": report["pooled"]["eer"]}}, MODELS / "detector.joblib")
         print(json.dumps(report, indent=2))

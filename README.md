@@ -6,8 +6,8 @@ Tells you whether a voice is a **real human** or **AI-generated** — from an up
 audio (wav/mp3/m4a/flac/ogg/webm, or mic)
   -> 16 kHz mono, trim silence, 3 s windows
   -> WavLM (frozen, lower 8 layers): mean+std over time of layers 2,3,5,7
-  -> standardise + logistic regression  -> P(AI) per window
-  -> average in logit space, calibrated threshold -> Real / AI-generated / Uncertain
+  -> standardise + small neural network (one 256-unit layer)  -> P(AI) per window
+  -> average in logit space, calibrated threshold, data-driven verdict band -> Real / AI-generated / Uncertain
 ```
 
 ## Run it
@@ -54,6 +54,29 @@ test audio pushed through MP3/AAC/Opus codecs, noise, reverb or band-limiting (c
 | Fake: Google TTS (5 accents) | 100 % | 0 % | 0 % |
 
 Re-encoded as WebM/Opus 32 kbps (what a browser microphone produces): real 79 / 8 / 12 %, both fake sets 100 %.
+
+### Recent TTS systems (MLAAD, 64 generators, 2024-2025)
+
+"AI voice shows 27 % and is called real" had a simple cause: the previous model caught only **60 %** of output from 64 recent
+TTS / voice-cloning systems (Index-TTS-2.0 22 %, VibeVoice 31-40 %, DeepGram 33 %, Cartesia Sonic-3 45 %, ...; 24 of 64
+generators were detected less than half the time). Training now includes ~1,500 clips from all 64 systems
+([MLAAD-tiny](https://huggingface.co/datasets/mueller91/MLAAD-tiny), CC BY-NC 4.0; Cartesia, Chatterbox, Higgs-Audio, VibeVoice,
+Qwen2.5-Omni, MiniMax, Sesame, F5, Fish, Kyutai, Resemble, ...), a small neural-network head instead of logistic regression
+(+2 AUC points, +4 points of AI caught at 10 % false alarms when a whole dataset is held out), and a verdict band chosen from held-out
+scores rather than a fixed margin.
+
+| Held-out | Result |
+|---|---|
+| AI detected on generators trained on (held-out clips) | 90 % |
+| **AI detected on 12 newest generators never trained on** (Cartesia Sonic-3, Higgs-Audio-V2, VibeVoice Large, Index-TTS-2.0, DeepGram, Sesame, Chatterbox, MiniMax 2.6, Qwen2.5-Omni, Maya1, Kyutai, SoulX) | **86 %** |
+| ASVspoof 5 clean / never-trained systems A29-A32 | 96 % / 94 % |
+| Verdict policy on held-out windows: AI called "real" / real called "AI" | 8 % / 8 % |
+| Real voices called real / AI called AI | 86 % / 87 % |
+| Independent check: unseen LibriSpeech readers correct / wrong; Windows + Google TTS | 88 % / 10 %; 100 % |
+
+Weakest generators: MegaTTS3 33%, Llasa-8B 64%, parler_tts_mini_v0.1 64%, suno_bark-small 64%, zonosTTS-v0.1 67%, Kyutai-TTS* 70%, Kani-TTS-370M 71%, sesame_csm* 72% (* never trained on). Real voices are flagged as AI a bit more often than before (unseen LibriSpeech
+4 % -> 10 %): that is the price of catching more modern AI. The browser version uses an int8-shrunk backbone, so borderline clips can
+read differently from the local Python app (about 3 % of individual 3 s segments flip).
 
 ### Modern generators (ASVspoof 5, 2024)
 
@@ -118,6 +141,7 @@ reliable fix is to record your own speaker/room/mic setup in the app's "Teach it
 | `unidata` — [UniDataPro real-vs-fake](https://huggingface.co/datasets/UniDataPro/real-vs-fake-human-voice-deepfake-audio) | phone-style recordings | synthetic clones | 80 |
 | `cv` — [Common Voice 17 (en)](https://huggingface.co/datasets/fixie-ai/common_voice_17_0) | 420 volunteer clips, 368 speakers | same sentences via 47 Microsoft neural voices (`edge-tts`) | 839 |
 | `asv5` — [ASVspoof 5 eval](https://huggingface.co/datasets/SpeechAntiSpoofingBenchmarks/ASVspoof5) | MLS audiobook speakers | modern TTS/VC attacks A17-A32, 11 codecs | 1,460 |
+| `mlaad` — [MLAAD-tiny](https://huggingface.co/datasets/mueller91/MLAAD-tiny) | (fake only; real from the sets above) | 64 recent TTS/cloning systems | 1,493 |
 | `libri` — [LibriSpeech train-clean-100](https://huggingface.co/datasets/openslr/librispeech_asr) | 20 readers | same text via `edge-tts` | 481 |
 
 The neural-TTS fakes (`cv`, `libri`) are generated with the `edge-tts` package, which sends the sentence text to
@@ -150,7 +174,7 @@ so no server is needed and audio never leaves the device. Vercel cannot host the
 ```
 web/index.html, app.js   UI (upload + microphone)
 web/detector.js, dsp.js  JavaScript port of the pipeline (trim, windows, VAD, classifier, aggregation)
-web/model/               wavlm_pooled.<hash>.onnx (69 MB: int8 matmuls + fp16-stored convs) and classifier.json
+web/model/               wavlm_pooled.<hash>.onnx (69 MB: int8 matmuls + fp16-stored convs), head.<hash>.bin (6 MB MLP head), classifier.json
 web/ort/                 vendored onnxruntime-web 1.30.0 (MIT)
 web/vercel.json          cross-origin-isolation headers (multi-threaded WASM) + caching
 ```

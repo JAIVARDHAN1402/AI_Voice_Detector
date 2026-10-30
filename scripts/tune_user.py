@@ -114,7 +114,7 @@ def main():
     w = train.cell_weights(X["ds"], X["y"])
     w = w * np.where(X["ds"] == "user", a.user_weight, 1.0)
     clf = train.make_clf(a.C)
-    clf.fit(train.feats(X["X"], layers), X["y"], logisticregression__sample_weight=w)
+    train.fit_weighted(clf, train.feats(X["X"], layers), X["y"], w)
     # reuse the old threshold only as a starting point: recompute it on pooled held-out data incl. yours
     held = train.concat([train.split_holdout(d, n)[1] for n, d in data.items() if n != "user"] + [test_part])
     p_held = train.predict(clf, held, layers)
@@ -130,12 +130,12 @@ def main():
     Xall = train.concat(list(data.values()))
     wall = train.cell_weights(Xall["ds"], Xall["y"]) * np.where(Xall["ds"] == "user", a.user_weight, 1.0)
     final = train.make_clf(a.C)
-    final.fit(train.feats(Xall["X"], layers), Xall["y"], logisticregression__sample_weight=wall)
+    train.fit_weighted(final, train.feats(Xall["X"], layers), Xall["y"], wall)
     shutil.copy(MODELS / "detector.joblib", MODELS / "detector_base.joblib")
     meta = dict(base.get("meta", {}))
     meta["tuned_on_user_clips"] = {"real": n_real, "ai": n_ai}
     joblib.dump({"clf": final, "layers": layers, "threshold": float(thr), "unsure_margin": base.get("unsure_margin", 0.15),
-                 "meta": meta}, MODELS / "detector.joblib")
+                 "real_max": base.get("real_max"), "ai_min": base.get("ai_min"), "meta": meta}, MODELS / "detector.joblib")
     print("\nSaved models/detector.joblib (previous model kept as models/detector_base.joblib). Restart the app to use it.")
 
 

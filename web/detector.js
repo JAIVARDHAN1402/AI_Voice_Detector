@@ -34,14 +34,50 @@ export class Detector {
     const cls = await (await fetch(base + '/model/classifier.json', { cache: 'no-cache' })).json();
     const bytes = await fetchBytes(base + '/model/' + cls.model_file, onProgress, cls.model_bytes);
     const session = await ort.InferenceSession.create(bytes, { executionProviders: ['wasm'], graphOptimizationLevel: 'all' });
-    return new Detector(session, cls);
+    let head = null;
+    if (cls.type === 'mlp') {                              // MLP head weights (scaler already folded in), little-endian float32
+      const raw = await fetchBytes(base + '/model/' + cls.head_file, null, cls.head_bytes);
+      head = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4);
+    }
+    return new Detector(session, cls, head);
   }
 
-  constructor(session, cls) {
+  constructor(session, cls, head) {
     this.session = session;
     this.cls = cls;
-    this.w = Float32Array.from(cls.weights);
     this.winN = Math.round(cls.window_s * SR);
+    if (cls.type === 'mlp') {
+      const H = cls.hidden, nIn = cls.n_in;
+      this.H = H; this.nIn = nIn;
+      this.W1 = head.subarray(0, nIn * H);                 // row-major (nIn x H)
+      this.b1 = head.subarray(nIn * H, nIn * H + H);
+      this.w2 = head.subarray(nIn * H + H, nIn * H + 2 * H);
+      this.b2 = head[nIn * H + 2 * H];
+    } else {
+      this.w = Float32Array.from(cls.weights);
+    }
+    this.realMax = cls.real_max ?? 0.5 - cls.unsure_margin;   // verdict band on the calibrated P(AI)
+    this.aiMin = cls.ai_min ?? 0.5 + cls.unsure_margin;
+  }
+
+  /** Classifier logit for one pooled-feature vector. */
+  logitOf(f) {
+    if (this.cls.type !== 'mlp') {
+      let z = this.cls.bias;
+      for (let i = 0; i < this.w.length; i++) z += this.w[i] * f[i];
+      return z;
+    }
+    const { H, nIn, W1 } = this;
+    const h = Float32Array.from(this.b1);
+    for (let i = 0; i < nIn; i++) {
+      const xi = f[i];
+      if (xi === 0) continue;
+      const row = i * H;
+      for (let j = 0; j < H; j++) h[j] += xi * W1[row + j];
+    }
+    let z = this.b2;
+    for (let j = 0; j < H; j++) if (h[j] > 0) z += h[j] * this.w2[j];
+    return z;
   }
 
   /** P(AI) for one 3 s window (before threshold shift). */
@@ -49,8 +85,7 @@ export class Detector {
     const x = new ort.Tensor('float32', peakNormalize(w), [1, this.winN]);
     const out = await this.session.run({ audio: x });
     const f = out[Object.keys(out)[0]].data;               // (1, nLayers, 1536) flattened, layer-major like the classifier
-    let z = this.cls.bias;
-    for (let i = 0; i < this.w.length; i++) z += this.w[i] * f[i];
+    const z = this.logitOf(f);
     return { p: sigmoid(z), z };
   }
 
@@ -82,7 +117,7 @@ export class Detector {
     }
     const z = live.reduce((a, b) => a + b, 0) / live.length - thrLogit;
     const pAi = sigmoid(z);
-    const lo = 0.5 - cls.unsure_margin, hi = 0.5 + cls.unsure_margin;
+    const lo = this.realMax, hi = this.aiMin;
     const verdict = pAi >= hi ? 'ai' : pAi <= lo ? 'real' : 'unsure';
 
     const notes = [];

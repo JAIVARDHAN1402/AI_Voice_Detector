@@ -38,6 +38,10 @@ class Detector:
         self.layers = b["layers"]
         self.threshold = b["threshold"]       # decision boundary on P(AI) that balances the two error types
         self.unsure_margin = b.get("unsure_margin", 0.15)
+        m = self.unsure_margin
+        # data-driven verdict band (calibrated P(AI)); older bundles fall back to a symmetric margin around 0.5
+        self.real_max = b.get("real_max", 0.5 - m)
+        self.ai_min = b.get("ai_min", 0.5 + m)
         self.meta = b.get("meta", {})
         self.embedder = Embedder()
 
@@ -86,7 +90,7 @@ class Detector:
         # Aggregate in logit space (robust to one extreme window); shift so the calibrated threshold maps to 0.5.
         z = float(np.mean(_logit(probs)) - _logit(self.threshold))
         p_ai = float(1 / (1 + np.exp(-z)))
-        lo, hi = 0.5 - self.unsure_margin, 0.5 + self.unsure_margin
+        lo, hi = self.real_max, self.ai_min
         verdict = "ai" if p_ai >= hi else "real" if p_ai <= lo else "unsure"
         for w in pw:
             if not w["skipped"]:
