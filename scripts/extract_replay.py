@@ -16,7 +16,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
-from extract_features import FEAT, WIN_S, subsample  # noqa: E402
+from extract_features import FEAT, WIN_S, load_clip, subsample  # noqa: E402
 from voicedetect.audio import SR, load_file, windows  # noqa: E402
 from voicedetect.augment import replay  # noqa: E402
 from voicedetect.features import Embedder  # noqa: E402
@@ -27,7 +27,7 @@ CHUNK = 150
 
 
 def prep(row, idx):
-    y = load_file(ROOT / row["path"])
+    y = load_clip(row)
     ws = windows(y, WIN_S, hop_s=WIN_S, max_windows=2 if len(y) >= 2 * WIN_S * SR else 1)
     rng = np.random.default_rng(10_000 + idx)
     keep = [i for i in range(len(ws)) if rng.random() < FRAC]

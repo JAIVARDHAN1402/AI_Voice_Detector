@@ -1,0 +1,189 @@
+{
+  "token_binding_fuzz": {
+    "trials_per_attack": 2000,
+    "accepted": {
+      "bit_flips_in_payload": 0,
+      "bit_flips_in_signature": 0,
+      "forged_payload_resigned_with_other_key": 0,
+      "txn_field_substitution": 0
+    },
+    "expired_token_rejected": true,
+    "note": "single-use/replay and transaction mismatch on the live service are covered by tests/test_voicelock.py"
+  },
+  "speaker_verification": {
+    "speakers": 64,
+    "genuine_trials": 457,
+    "impostor_trials": 4290,
+    "eer": 0.0065,
+    "eer_threshold": 0.442,
+    "genuine_mean": 0.725,
+    "impostor_mean": 0.128,
+    "at_tier_thresholds": {
+      "low": {
+        "min": 0.4,
+        "FRR": 0.0066,
+        "FAR": 0.0159
+      },
+      "medium": {
+        "min": 0.45,
+        "FRR": 0.0066,
+        "FAR": 0.0058
+      },
+      "high": {
+        "min": 0.5,
+        "FRR": 0.0066,
+        "FAR": 0.0009
+      },
+      "critical": {
+        "min": 0.55,
+        "FRR": 0.0263,
+        "FAR": 0.0002
+      }
+    },
+    "noise_genuine_FRR": {
+      "SNR 20 dB": {
+        "low": 0.0,
+        "medium": 0.033,
+        "high": 0.05,
+        "critical": 0.1
+      },
+      "SNR 10 dB": {
+        "low": 0.033,
+        "medium": 0.1,
+        "high": 0.317,
+        "critical": 0.517
+      },
+      "SNR 5 dB": {
+        "low": 0.2,
+        "medium": 0.4,
+        "high": 0.583,
+        "critical": 0.8
+      }
+    }
+  },
+  "challenge_recognition": {
+    "clean": {
+      "accepted": 0.958,
+      "perfect": 0.854,
+      "n": 48
+    },
+    "SNR 20 dB": {
+      "accepted": 0.958,
+      "perfect": 0.812,
+      "n": 48
+    },
+    "SNR 10 dB": {
+      "accepted": 0.917,
+      "perfect": 0.688,
+      "n": 48
+    },
+    "SNR 5 dB": {
+      "accepted": 0.833,
+      "perfect": 0.458,
+      "n": 48
+    },
+    "loudspeaker->mic (replay sim)": {
+      "accepted": 0.688,
+      "perfect": 0.458,
+      "n": 48
+    },
+    "wrong_phrase_accepted": "0/48",
+    "guess_space": "2,874,960,000 phrases per challenge"
+  },
+  "forensics_clip_level": {
+    "per_set": {
+      "real: ASVspoof/others (asv_test)": {
+        "n": 60,
+        "mean_p_ai": 0.017,
+        "pass_low": 0.983,
+        "pass_medium": 0.983,
+        "pass_high": 0.983,
+        "pass_critical": 0.983
+      },
+      "real: LibriSpeech readers": {
+        "n": 39,
+        "mean_p_ai": 0.0,
+        "pass_low": 1.0,
+        "pass_medium": 1.0,
+        "pass_high": 1.0,
+        "pass_critical": 1.0
+      },
+      "real: Common Voice volunteers": {
+        "n": 39,
+        "mean_p_ai": 0.0,
+        "pass_low": 1.0,
+        "pass_medium": 1.0,
+        "pass_high": 1.0,
+        "pass_critical": 1.0
+      },
+      "AI: ASVspoof 2019 attacks (asv_test)": {
+        "n": 49,
+        "mean_p_ai": 0.947,
+        "pass_low": 0.041,
+        "pass_medium": 0.041,
+        "pass_high": 0.041,
+        "pass_critical": 0.041
+      },
+      "AI: ASVspoof 5 modern attacks": {
+        "n": 50,
+        "mean_p_ai": 0.997,
+        "pass_low": 0.0,
+        "pass_medium": 0.0,
+        "pass_high": 0.0,
+        "pass_critical": 0.0
+      },
+      "AI: 64 recent TTS systems (MLAAD)": {
+        "n": 60,
+        "mean_p_ai": 0.976,
+        "pass_low": 0.017,
+        "pass_medium": 0.017,
+        "pass_high": 0.0,
+        "pass_critical": 0.0
+      },
+      "AI: OpenAI/ChatGPT voices": {
+        "n": 50,
+        "mean_p_ai": 0.999,
+        "pass_low": 0.0,
+        "pass_medium": 0.0,
+        "pass_high": 0.0,
+        "pass_critical": 0.0
+      },
+      "AI: Microsoft neural voices (libri, cv)": {
+        "n": 30,
+        "mean_p_ai": 0.999,
+        "pass_low": 0.0,
+        "pass_medium": 0.0,
+        "pass_high": 0.0,
+        "pass_critical": 0.0
+      }
+    },
+    "clips": {
+      "real": 138,
+      "ai": 239
+    },
+    "per_tier": {
+      "low": {
+        "limit": 0.5,
+        "real_accepted(1-FRR)": 0.993,
+        "AI_accepted(FAR)": 0.013
+      },
+      "medium": {
+        "limit": 0.45,
+        "real_accepted(1-FRR)": 0.993,
+        "AI_accepted(FAR)": 0.013
+      },
+      "high": {
+        "limit": 0.35,
+        "real_accepted(1-FRR)": 0.993,
+        "AI_accepted(FAR)": 0.008
+      },
+      "critical": {
+        "limit": 0.25,
+        "real_accepted(1-FRR)": 0.993,
+        "AI_accepted(FAR)": 0.008
+      }
+    },
+    "clip_level_eer": 0.9922,
+    "note": "whole clips up to 8 s through the production Layer-1 pipeline"
+  }
+}

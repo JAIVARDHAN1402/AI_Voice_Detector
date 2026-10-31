@@ -23,8 +23,23 @@ MAX_WIN_PER_CLIP = 2
 AUG_FRAC = 0.5          # fraction of windows that also get an augmented (codec/noise/reverb) copy
 
 
-def build_windows(row, seed):
+# Raw corpora whose clips keep long leading/trailing silence AND where the amount of silence differs between real and fake
+# (asv_test: real 1.4 s vs fake 0.6 s). The model learned "less silence = fake" from them; the app trims silence, so that
+# cue vanished and real clips of this kind looked fake. They are now trimmed exactly like every other dataset.
+TRIM_SETS = {"asv_train", "asv_test", "unidata"}
+
+
+def load_clip(row):
+    import librosa
     y = load_file(ROOT / row["path"])
+    if row["dataset"] in TRIM_SETS:
+        t, _ = librosa.effects.trim(y, top_db=30)
+        y = np.pad(t, (int(0.1 * 16000), int(0.1 * 16000)))
+    return y
+
+
+def build_windows(row, seed):
+    y = load_clip(row)
     # short clips -> one window; only clips well over two windows long contribute a second one
     ws = windows(y, WIN_S, hop_s=WIN_S, max_windows=MAX_WIN_PER_CLIP if len(y) >= 2 * WIN_S * 16000 else 1)
     rng = np.random.default_rng(seed)
