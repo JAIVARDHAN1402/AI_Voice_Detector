@@ -1,23 +1,23 @@
 {
   "real (LibriSpeech)": {
     "n": 48,
-    "correct": 0.9166666666666666,
-    "unsure": 0.041666666666666664,
-    "wrong": 0.041666666666666664,
-    "median_prob_ai": 6.884929083456568e-05
+    "correct": 0.875,
+    "unsure": 0.0625,
+    "wrong": 0.0625,
+    "median_prob_ai": 0.0001958011192518682
   },
   "fake (Windows SAPI)": {
     "n": 30,
     "correct": 1.0,
     "unsure": 0.0,
     "wrong": 0.0,
-    "median_prob_ai": 0.9997414887326977
+    "median_prob_ai": 0.999647088843394
   },
   "fake (Google TTS)": {
     "n": 30,
     "correct": 1.0,
     "unsure": 0.0,
     "wrong": 0.0,
-    "median_prob_ai": 0.9997414887326977
+    "median_prob_ai": 0.999647088843394
   }
 }

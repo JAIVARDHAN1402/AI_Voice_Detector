@@ -21,13 +21,14 @@ ROOT = Path(__file__).resolve().parents[1]
 FEAT = ROOT / "data" / "features"
 REPORTS = ROOT / "reports"
 MODELS = ROOT / "models"
-TRAIN_SETS = ["gary", "unidata", "asv_train", "cv", "libri", "asv5", "mlaad", "chatgpt"]
+TRAIN_SETS = ["gary", "unidata", "asv_train", "cv", "libri", "asv5", "mlaad", "chatgpt", "user"]   # "user": your own labelled clips (prepare_user_clip.py); skipped when absent
 HEAD = "mlp"                       # "mlp" (one 256-unit hidden layer) or "linear" (logistic regression)
 # newest TTS systems in MLAAD held out entirely from the evaluation fit (honest "never seen this generator" test)
 HOLD_TTS = {"Cartesia.ai_Sonic-3_", "Higgs-Audio-V2", "Microsoft_VibeVoice_Large", "Index-TTS-2.0", "DeepGram", "sesame_csm",
             "Chatterbox", "minimax_speech-2.6-hd", "Qwen2.5-Omni", "Maya1_TTS", "Kyutai-TTS", "SoulX-Podcast"}
 HOLD_GPT = {"gpt4o_tts_onyx", "gpt4o_tts_shimmer", "chatgpt_app_juniper"}   # OpenAI / ChatGPT voices held out of the evaluation fit
-FAKE_ONLY = {"mlaad": HOLD_TTS, "chatgpt": HOLD_GPT}   # fake-only sets: hold out whole generators + 20% of clips of the others
+USER_WEIGHT = 8.0                  # your own clips count this many times more than their share (there are very few of them)
+FAKE_ONLY = {"mlaad": HOLD_TTS, "chatgpt": HOLD_GPT, "user": set()}   # fake-only sets: hold out whole generators + 20% of clips of the others
 HOLD_ATTACKS = {"A29", "A30", "A31", "A32"}   # ASVspoof 5 systems held out entirely in the evaluation fit
 EXTRA_SETS = ["asv_test"]          # unseen speakers + unseen attack systems (A07-A19)
 USE_REPLAY = True                  # include speaker->room->mic degraded samples when their features exist
@@ -116,7 +117,8 @@ def fit_weighted(clf, X, y, w):
 
 
 def fit(d, layers, C):
-    return fit_weighted(make_clf(C), feats(d["X"], layers), d["y"], cell_weights(d["ds"], d["y"]))
+    w = cell_weights(d["ds"], d["y"]) * np.where(d["ds"] == "user", USER_WEIGHT, 1.0)
+    return fit_weighted(make_clf(C), feats(d["X"], layers), d["y"], w)
 
 
 def predict(clf, d, layers):
