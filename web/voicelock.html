@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VoiceLock</title>
+<link rel="stylesheet" href="vl/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo" aria-hidden="true">&#128274;</span><div><h1>VoiceLock</h1><p>Transaction-bound voice authorisation</p></div></div>
+  <nav class="nav"><a href="/">Detector</a><a href="/voicelock" class="on">VoiceLock</a></nav>
+</header>
+<div class="demo" role="note"><b>Runs entirely in your browser.</b> The speaker, speech and AI-voice models run on your device and nothing is uploaded. Keys, sessions and the audit log are stored in this browser, so this is a working <b>demonstration</b> of the protocol, not a security boundary (a real deployment keeps them on a server).</div>
+
+<main>
+  <section class="card wide" id="c-models">
+    <h2>Models <span class="chip" id="modelsChip">not loaded</span> <button id="loadBtn" class="btn small ghost hidden">Retry</button></h2>
+    <div class="models" id="models"></div>
+    <p class="muted small" id="modelsNote">The first visit downloads about 140 MB once (pieces are retried if the connection stalls) and keeps it in your browser, so the next visit is instant.</p>
+  </section>
+
+  <section class="card" id="c-user">
+    <h2><span class="n">1</span>Enrol the speaker</h2>
+    <label>User id <input id="user" value="alice" maxlength="64" autocomplete="off"></label>
+    <div class="meter"><div id="enrollBar"></div></div>
+    <p class="muted" id="enrollText">0 / 3 samples</p>
+    <p class="prompt" id="enrollPrompt"></p>
+    <div class="row">
+      <label class="btn primary" id="enrollUploadLbl">Upload a voice sample<input type="file" accept="audio/*,video/*,.wav,.mp3,.m4a,.flac,.ogg,.opus,.webm,.aac,.mp4,.m4v,.mov,.mkv,.3gp" id="enrollFile" hidden multiple></label>
+      <button id="enrollRec" class="btn ghost">Record sample</button>
+      <button id="enrollReset" class="btn ghost danger">Reset</button>
+    </div>
+    <p class="muted small">Add 3 clips of the same person talking (3-10 s each; a recording from a phone voice-recorder works). A synthetic sample is refused.</p>
+  </section>
+
+  <section class="card" id="c-txn">
+    <h2><span class="n">2</span>Request a transfer</h2>
+    <div class="grid2">
+      <label>Amount <input id="amount" inputmode="decimal" value="50000"></label>
+      <label>Currency <input id="currency" value="INR" maxlength="3"></label>
+    </div>
+    <label>Recipient <input id="recipient" value="Sharma Traders Pvt Ltd" maxlength="120"></label>
+    <label>Reference <input id="reference" value="Invoice 2291" maxlength="200"></label>
+    <label class="check"><input type="checkbox" id="testMode"><span><b>Test mode</b> (no microphone needed): the phrase is fixed to <i>&ldquo;amber candle river, 1 2 3 4&rdquo;</i>, so you can record it once on a phone and upload the file. Not secure, since anyone could pre-record it.</span></label>
+    <button id="start" class="btn primary" disabled>Request authorisation</button>
+    <div id="risk" class="risk hidden"></div>
+  </section>
+
+  <section class="card hidden" id="c-challenge">
+    <h2><span class="n">3</span>Speak the challenge <span class="chip" id="passChip"></span><span class="badge hidden" id="testBadge">TEST MODE</span></h2>
+    <p class="muted">Say this phrase clearly. It was generated for <b>this</b> transaction and works once.</p>
+    <div class="phrase" id="phrase" aria-live="polite"></div>
+    <div class="row between"><span class="muted" id="timer"></span><span class="muted" id="txnLine"></span></div>
+    <div class="row">
+      <label class="btn primary big">Upload the audio<input type="file" accept="audio/*,video/*,.wav,.mp3,.m4a,.flac,.ogg,.opus,.webm,.aac,.mp4,.m4v,.mov,.mkv,.3gp" id="respFile" hidden></label>
+      <button id="rec" class="btn ghost big">Record with microphone</button>
+    </div>
+    <p class="muted small">Uploading lets you play the attacker too: try a recording of someone else, or text-to-speech reading the phrase.</p>
+  </section>
+
+  <section class="card hidden" id="c-result">
+    <h2><span class="n">4</span>Decision</h2>
+    <div id="banner" class="banner"></div>
+    <div class="layers" id="layers"></div>
+    <div id="tokenBox" class="hidden">
+      <h3>Authorisation token <span class="muted small">single use &middot; bound to this transaction</span></h3>
+      <pre id="claims"></pre>
+      <div class="row">
+        <button id="execute" class="btn primary">Execute transfer with token</button>
+        <button id="tamper" class="btn ghost">Try a tampered amount</button>
+        <button id="replay" class="btn ghost">Replay the token</button>
+      </div>
+      <p id="execOut" class="muted"></p>
+    </div>
+  </section>
+
+  <section class="card wide" id="c-log">
+    <h2>Security log <span class="chip" id="chain">checking&hellip;</span> <button id="refreshLog" class="btn ghost small">Refresh</button> <button id="resetAll" class="btn ghost small danger">Clear demo data</button></h2>
+    <div class="tablewrap"><table id="log"><thead><tr><th>#</th><th>Time</th><th>Event</th><th>Session</th><th>Details</th></tr></thead><tbody></tbody></table></div>
+  </section>
+</main>
+<script type="module" src="vl/ui.js"></script>
+</body>
+</html>

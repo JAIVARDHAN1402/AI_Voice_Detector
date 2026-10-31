@@ -52,11 +52,15 @@
   .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s .8s linear infinite;vertical-align:-3px;margin-right:8px}
   @keyframes s{to{transform:rotate(360deg)}}
   footer{color:var(--muted);font-size:.85rem;margin-top:28px}
+  .nav{display:flex;gap:6px;justify-content:flex-end;margin-bottom:10px}
+  .nav a{padding:6px 12px;border-radius:8px;border:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:.9rem}
+  .nav a.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
   .privacy{display:inline-block;font-size:.85rem;color:var(--real);background:var(--real-bg);border-radius:999px;padding:2px 12px;margin-bottom:14px}
 </style>
 </head>
 <body>
 <main>
+  <nav class="nav"><a href="/" class="on">Detector</a><a href="/voicelock">VoiceLock</a></nav>
   <h1>AI Voice Detector</h1>
   <p class="sub">Upload an audio clip or record from your microphone. The model estimates whether the voice is a real human or AI-generated.</p>
   <div class="privacy">&#128274; Runs in your browser &mdash; your audio never leaves your device</div>
@@ -64,7 +68,7 @@
   <div class="card" id="loading">
     <div id="load-text"><span class="spin"></span>Loading the detection model&hellip;</div>
     <progress id="load-bar" max="100" value="0"></progress>
-    <div class="hint" id="load-hint">One-time download of about 70 MB; your browser keeps it for next time.</div>
+    <div class="hint" id="load-hint">One-time download of about 70 MB (retried automatically if the connection stalls); your browser keeps it for next time.</div>
   </div>
 
   <div id="app" hidden>

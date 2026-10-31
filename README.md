@@ -207,22 +207,20 @@ so no server is needed and audio never leaves the device. Vercel cannot host the
 ```
 web/index.html, app.js   UI (upload + microphone)
 web/detector.js, dsp.js  JavaScript port of the pipeline (trim, windows, VAD, classifier, aggregation)
-web/model/               wavlm_pooled.<hash>.onnx (48 MB, 4 transformer layers: int8 matmuls + fp16-stored convs), head.<hash>.bin (4.7 MB MLP head), classifier.json
+web/model/               wavlm_pooled.<hash>.onnx (69 MB, 7 transformer layers: int8 matmuls + fp16-stored convs), head.<hash>.bin (6.3 MB MLP head), classifier.json
 web/ort/                 vendored onnxruntime-web 1.30.0 (MIT)
 web/vercel.json          cross-origin-isolation headers (multi-threaded WASM) + caching
 ```
 
-**Load time.** The first visit downloads the model once (the browser caches it afterwards). It was 69 MB (7 transformer layers); the site now
-uses a shallower backbone, **4 layers -> 48 MB (-31 %)** and faster inference, with its own head trained on layers 2,3,4
-(`models/detector_web.joblib`, `reports/evaluation_web.json`: pooled held-out accuracy 86.9 % vs 87.8 % for the 7-layer model that the
-local app and VoiceLock keep using; the 5-layer variant was 87.4 %). So the website and the local app can disagree on borderline clips.
-On this machine's slow connection the old file took 200-400 s to download, the size is what matters.
+**Load time / stalled downloads.** The model is 69 MB. `web/vl/loader.js` downloads it in 4 MB pieces, 6 in parallel, aborts and retries a piece
+that makes no progress for 15 s (the "stuck at 4/46 MB" case), and keeps the finished file in Cache Storage (ranged responses are not
+cached by the HTTP cache), so later visits are instant. The site keeps the full 7-layer model on purpose: a 4-layer variant
+(`models/detector_web.joblib`, 48 MB, `scripts/layer_study.py`: 86.9 % vs 87.8 % pooled) missed a short TTS challenge clip that the
+7-layer model catches (P(AI) 0.08 vs 0.87), which matters for VoiceLock's short responses. It is not deployed.
 
-Rebuild after retraining: `train.py final --layers 2 3 4 --out detector_web.joblib --report evaluation_web.json` ->
-`export_onnx.py --bundle detector_web.joblib --out data/onnx/wavlm_pooled_fp32.onnx` -> `quantize_onnx.py --bundle detector_web.joblib` ->
-`export_classifier.py detector_web.joblib` (writes the hashed model name and the folded classifier). The comparison printed by
-`quantize_onnx.py` only supports a linear head; the MLP parity was checked separately (80 windows: 0 flipped decisions). Test locally with `python scripts/dev_web.py` (same headers as Vercel) and deploy with
-`cd web && npx vercel --prod`.
+Rebuild after retraining: `export_onnx.py` -> `quantize_onnx.py` -> `export_classifier.py` (writes the hashed model name and the folded
+classifier; the MLP parity was checked separately, 80 windows: 0 flipped decisions). Test locally with `python scripts/dev_web.py`
+(same headers as Vercel) and deploy by pushing to `main` (Vercel Git integration) or `npx vercel --prod`.
 
 Checks: the ONNX export matches PyTorch to ~2e-6; int8 quantisation shifts window logits by 0.6 (std) with 0 flipped
 decisions on 80 windows; the browser pipeline gave the same verdicts as the Python detector on 10/10 test files and identical
@@ -264,6 +262,19 @@ verified -> single-use Ed25519 token bound to the transaction hash      blocked 
 | Token tampering, 2000 trials each (payload bit flip, signature bit flip, re-signed with another key, other amount/recipient) | **0 accepted**; expired token rejected |
 | End to end, 10 LibriSpeech speakers, low and high tier | genuine user verified 10/10 and 10/10; replay of someone's recording, pre-made TTS, live TTS of the challenge, and live TTS played through a loudspeaker: **0 verified** in every case (40 attack trials per tier). Median latency 3.0-4.6 s on CPU |
 | Layer 1 alone, 239 AI clips (ASVspoof 2019 + 5, MLAAD, OpenAI voices, Microsoft voices) vs 138 real | AI accepted 1.3 %, real accepted 99 %, EER 0.8 % (**these clips were in the detector's training data**: a pipeline check, not a generalisation number) |
+
+### VoiceLock on the website (https://ai-voice-detector.vercel.app/voicelock)
+
+The Vercel site cannot run the Python backend, so `web/voicelock.html` + `web/vl/` run the **same four layers in the browser**:
+the site's WavLM detector, **ECAPA-TDNN exported to ONNX** (`scripts/export_ecapa_onnx.py`; embeddings match SpeechBrain with cosine
+1.00000 on 12 clips, 44 MB), **Whisper tiny.en** through transformers.js (self-hosted, 41 MB, int8), the HMAC challenge, risk engine,
+signed single-use token and hash-chained log (`web/vl/engine.js`, a port of `voicelock/`). Everything runs on the visitor's device;
+the first visit downloads ~160 MB once (robust loader above). Because the secret, keys and state live in the browser, **this is a working
+demonstration, not a security boundary**. Upload-first UI (no microphone needed) plus a **test mode** with a fixed phrase so the genuine
+path can be tried by pre-recording the phrase on a phone. Browser test with the real models: attacker TTS reading the challenge ->
+blocked (P(AI) 0.88, speaker 0.05); the enrolled speaker's real recording -> layers 1-2 pass; a different real person -> blocked; with the
+phrase check relaxed for the test: verified, token executes once, tampered amount and replay denied, hash chain valid. A response takes
+~3-5 s on a laptop (about 9 s in a background browser tab).
 
 ### What is NOT proven (read before trusting this)
 

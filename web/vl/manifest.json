@@ -1,0 +1,11 @@
+{
+  "ecapa": {
+    "file": "ecapa.13f0eb6f.onnx",
+    "bytes": 44467842
+  },
+  "whisper": {
+    "onnx/encoder_model_quantized.onnx": 10124993,
+    "onnx/decoder_model_merged_quantized.onnx": 30718858
+  },
+  "whisper_version": "f536b1f3"
+}

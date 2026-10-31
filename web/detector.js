@@ -2,6 +2,7 @@
 // -> logit-space aggregation -> verdict). Runs entirely on the visitor's device.
 import * as ort from './ort/ort.wasm.min.mjs';
 import { SR, trimSilence, padBoth, windows, speechFraction, peakNormalize, maxAbs } from './dsp.js';
+import { fetchRobust } from './vl/loader.js';
 
 const MIN_SECONDS = 1.0, MAX_SECONDS = 60.0;
 const clamp = p => Math.min(1 - 1e-4, Math.max(1e-4, p));
@@ -10,22 +11,8 @@ const sigmoid = z => 1 / (1 + Math.exp(-z));
 
 export class AudioError extends Error {}
 
-async function fetchBytes(url, onProgress, expected) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('Could not download ' + url + ' (' + res.status + ')');
-  const total = Number(res.headers.get('content-length')) || expected || 0;
-  const reader = res.body.getReader();
-  const chunks = []; let got = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value); got += value.length;
-    if (onProgress) onProgress(got, total);
-  }
-  const out = new Uint8Array(got); let o = 0;
-  for (const c of chunks) { out.set(c, o); o += c.length; }
-  return out;
-}
+// Big files go through the robust downloader (parallel ranged pieces, stall detection + retry, Cache Storage).
+const fetchBytes = (url, onProgress, expected) => fetchRobust(url, { onProgress, expected });
 
 export class Detector {
   static async load(onProgress, base = '.') {
