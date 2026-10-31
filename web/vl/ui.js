@@ -2,7 +2,7 @@ import * as VL from './engine.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const pct = v => (v * 100).toFixed(0) + '%';
+const pct = v => (v * 100).toFixed(v < 0.001 ? 4 : v < 0.1 ? 1 : 0) + '%';
 const user = () => $('user').value.trim();
 const PROMPTS = [
   'The quick brown fox jumps over the lazy dog near the old river bridge.',
@@ -85,13 +85,14 @@ $('start').addEventListener('click', async () => {
   lastTxn = { user_id: user(), amount: $('amount').value.trim(), currency: $('currency').value.trim() || 'INR',
               recipient: $('recipient').value.trim(), reference: $('reference').value.trim() };
   $('start').disabled = true;
+  VL.setStrict($('strictMode').checked);
   try {
     const body = await VL.startTransaction({ ...lastTxn, test_mode: $('testMode').checked });
     session = body; lastToken = null; $('c-result').classList.add('hidden');
     const r = body.risk;
     $('risk').classList.remove('hidden');
     $('risk').innerHTML = `Risk tier <b class="${r.tier}">${r.tier.toUpperCase()}</b> &middot; needs ${body.thresholds.passes_required} challenge${body.thresholds.passes_required > 1 ? 's' : ''}` +
-      ` &middot; P(AI) must stay below ${pct(body.thresholds.ai_limit)} &middot; speaker match &ge; ${body.thresholds.speaker_min}<br><span class="muted">${r.reasons.map(esc).join(' &middot; ')}</span>`;
+      ` &middot; P(AI) must stay below ${pct(body.thresholds.ai_limit)} &middot; speaker match &ge; ${body.thresholds.speaker_min}<br><span class="muted">${guaranteeText(body.thresholds.guarantee)}</span><br><span class="muted">${r.reasons.map(esc).join(' &middot; ')}</span>`;
     showChallenge(body.challenge);
   } catch (e) { fail(e); }
   $('start').disabled = !ready; refreshLog();
@@ -123,6 +124,13 @@ makeRecorder($('rec'), 'Record with microphone', answer);
 $('respFile').addEventListener('change', e => { if (e.target.files[0]) answer(e.target.files[0]); e.target.value = ''; });
 
 /* ---------------- 4. decision ---------------- */
+/* what is known about the authenticity limit on AI voices from generators the detector has never seen */
+function guaranteeText(g) {
+  if (!g) return '';
+  if (g.source === 'conformal') return `strict limit: AI voice from an unseen corpus accepted ≤ ${(g.alpha * 100).toFixed(0)}% (${(g.confidence * 100).toFixed(0)}% confidence); genuine speech rejected ~${(g.genuine_rejected_pooled * 100).toFixed(0)}%`;
+  if (g.source === 'audit') return `audited on unseen generators: ~${(g.mean_generator_miss * 100).toFixed(0)}% of AI voices accepted on average, ~${(g.genuine_rejected * 100).toFixed(0)}% of genuine speech rejected (no formal guarantee)`;
+  return 'hand-set limit (no formal guarantee)';
+}
 function layerCard(title, ok, rows, flags) {
   return `<div class="layer"><h4>${title}<span class="${ok ? 'ok' : 'bad'}">${ok ? '✓ pass' : '✗ fail'}</span></h4><dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>${flags && flags.length ? '<ul>' + flags.map(f => `<li>${esc(f)}</li>`).join('') + '</ul>' : ''}</div>`;
 }
@@ -135,7 +143,7 @@ function showResult(r) {
   if (c) {
     const a = d.acoustic || {};
     $('layers').innerHTML =
-      layerCard('1 &middot; AI-voice forensics', c.authenticity.ok, [['P(AI)', pct(c.authenticity.p_ai)], ['limit', '< ' + pct(c.authenticity.limit)], ['detector', c.authenticity.verdict],
+      layerCard('1 &middot; AI-voice forensics', c.authenticity.ok, [['P(AI)', pct(c.authenticity.p_ai)], ['limit', '< ' + pct(c.authenticity.limit)], ['guarantee', guaranteeText(c.authenticity.guarantee)], ['detector', c.authenticity.verdict],
         ['acoustic anomaly', a.anomaly_score ?? 0], ['noise floor', (a.noise_floor_db ?? '') + ' dB']], a.flags) +
       layerCard('2 &middot; Speaker identity', c.speaker.ok && c.consistency.ok, [
         ['speaker match', `${c.speaker.score} ${c.speaker.ok ? '✓' : '✗'} (need ≥ ${c.speaker.min})`],

@@ -288,12 +288,37 @@ async function loadAsr(manifest) {
   MODELS.asr = await tf.pipeline('automatic-speech-recognition', 'whisper-tiny.en', { dtype: 'q8', device: 'wasm' });
   setStatus('asr', { got: total, state: 'ready' });
 }
+// What is known about the authenticity limit on AI voices the detector has never seen (scripts/conformal_study.py). conformal.json holds
+// `audit` (measured behaviour of the default limits) and `tiers` (strict domain-robust conformal limits). Optional: without the file the
+// result says "heuristic". Default mode = audit (default limits + their audited error); "strict" swaps in the conformal limits.
+async function loadGuarantee() {
+  try {
+    const r = await fetch(vlBase + 'conformal.json', { cache: 'no-cache' });
+    if (!r.ok) return;
+    const cal = await r.json();
+    if (TIERS.every(t => cal.tiers && cal.audit && Number.isFinite(cal.tiers[t].p_ai_limit) && cal.audit[t])) CFG.cal = cal;
+  } catch (e) { /* heuristic limits */ }
+}
+export const setStrict = v => { CFG.strict = !!v; };
+const isStrict = () => !!(CFG.cal && CFG.strict);
+const aiLimitFor = tier => isStrict() ? CFG.cal.tiers[tier].p_ai_limit : CFG.aiLimit[tier];
+const guaranteeFor = tier => {
+  if (!CFG.cal) return { source: 'heuristic', note: 'hand-set limit, no formal error guarantee' };
+  if (isStrict()) {
+    const t = CFG.cal.tiers[tier];
+    return { source: 'conformal', alpha: t.alpha, confidence: +(1 - CFG.cal.delta).toFixed(3), generators: CFG.cal.generators_used,
+             genuine_rejected_pooled: +t.genuine_rejected_pooled.toFixed(3) };
+  }
+  const a = CFG.cal.audit[tier];
+  return { source: 'audit', generators: a.generators, mean_generator_miss: +a.mean_generator_miss.toFixed(3),
+           pct_generators_miss_over_10pct: +a.pct_generators_miss_over_10pct.toFixed(3), genuine_rejected: +a.genuine_rejected.toFixed(3) };
+};
 let loading = null;
 export function loadModels() {
   if (!loading) {
     loading = (async () => {
       const manifest = await (await fetch(vlBase + 'manifest.json', { cache: 'no-cache' })).json();
-      await Promise.all([loadDetector(), loadSpeaker(manifest), loadAsr(manifest)]);
+      await Promise.all([loadDetector(), loadSpeaker(manifest), loadAsr(manifest), loadGuarantee()]);
     })().catch(e => { loading = null; throw e; });
   }
   return loading;
@@ -344,10 +369,11 @@ function assess(txn, known, recent, t = now()) {
 }
 function judge(tier, challenge, forensic, speaker, cons) {
   const pAi = forensic.p_ai, anomaly = forensic.acoustic.anomaly_score;
-  const aiLimit = Math.max(0.05, CFG.aiLimit[tier] - 0.10 * anomaly), spMin = CFG.speakerMin[tier], sp = speaker.score;
+  // acoustic anomalies only ever tighten the limit, so a strict (calibrated) guarantee stays valid (it becomes more conservative)
+  const aiLimit = isStrict() ? aiLimitFor(tier) * (1 - 0.5 * anomaly) : Math.max(0.05, CFG.aiLimit[tier] - 0.10 * anomaly), spMin = CFG.speakerMin[tier], sp = speaker.score;
   const checks = {
     challenge: { ok: !!challenge.passed, score: challenge.score, heard: challenge.heard },
-    authenticity: { ok: pAi < aiLimit, p_ai: +pAi.toFixed(3), limit: +aiLimit.toFixed(3), verdict: forensic.verdict },
+    authenticity: { ok: pAi < aiLimit, p_ai: +pAi.toFixed(3), limit: +aiLimit.toPrecision(3), verdict: forensic.verdict, guarantee: guaranteeFor(tier) },
     speaker: { ok: sp >= spMin, score: +sp.toFixed(3), min: spMin },
     consistency: { ok: cons === null ? true : cons.min >= CFG.consistencyMin, min: cons === null ? null : +cons.min.toFixed(3), threshold: CFG.consistencyMin },
   };
@@ -410,7 +436,7 @@ export async function startTransaction(t) {
   const c = await issueChallenge(sess);
   await log('session_started', sid, user, { tier: a.tier, reasons: a.reasons, txn_hash: h, amount: canon.amount, currency: canon.currency, test_mode: !!t.test_mode });
   return { session_id: sid, tier: a.tier, risk: a, transaction: canon, txn_hash: h, challenge: c, test_mode: !!t.test_mode,
-           thresholds: { ai_limit: CFG.aiLimit[a.tier], speaker_min: CFG.speakerMin[a.tier], passes_required: CFG.requiredPasses[a.tier] } };
+           thresholds: { ai_limit: aiLimitFor(a.tier), guarantee: guaranteeFor(a.tier), speaker_min: CFG.speakerMin[a.tier], passes_required: CFG.requiredPasses[a.tier] } };
 }
 
 async function fail(sess, reason, verdict, severe, wave) {

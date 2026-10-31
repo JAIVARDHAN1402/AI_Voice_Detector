@@ -9,7 +9,7 @@
 <body>
 <header class="top">
   <div class="brand"><span class="logo" aria-hidden="true">&#128274;</span><div><h1>VoiceLock</h1><p>Transaction-bound voice authorisation</p></div></div>
-  <nav class="nav"><a href="/">Detector</a><a href="/voicelock" class="on">VoiceLock</a></nav>
+  <nav class="nav"><a href="/">Detector</a><a href="/voicelock" class="on">VoiceLock</a><a href="/research">Research</a></nav>
 </header>
 <div class="demo" role="note"><b>Runs entirely in your browser.</b> The speaker, speech and AI-voice models run on your device and nothing is uploaded. Keys, sessions and the audit log are stored in this browser, so this is a working <b>demonstration</b> of the protocol, not a security boundary (a real deployment keeps them on a server).</div>
 
@@ -43,6 +43,7 @@
     <label>Recipient <input id="recipient" value="Sharma Traders Pvt Ltd" maxlength="120"></label>
     <label>Reference <input id="reference" value="Invoice 2291" maxlength="200"></label>
     <label class="check"><input type="checkbox" id="testMode"><span><b>Test mode</b> (no microphone needed): the phrase is fixed to <i>&ldquo;amber candle river, 1 2 3 4&rdquo;</i>, so you can record it once on a phone and upload the file. Not secure, since anyone could pre-record it.</span></label>
+    <label class="check"><input type="checkbox" id="strictMode"><span><b>Strict authenticity limit</b> (calibrated on unseen AI generators, see <a href="/research">Research</a>): bounds how often an AI voice gets through, but rejects far more genuine speech. Off = default limits, shown with their measured error.</span></label>
     <button id="start" class="btn primary" disabled>Request authorisation</button>
     <div id="risk" class="risk hidden"></div>
   </section>

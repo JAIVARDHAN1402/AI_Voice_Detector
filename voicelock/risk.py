@@ -35,17 +35,25 @@ def assess(txn: dict, s: Settings, known_recipients: list, recent_sessions: int,
     return {"tier": tier, "base_tier": TIERS[min(base, 3)], "risk_score": TIER_RISK[tier], "reasons": reasons}
 
 
-def judge(tier: str, challenge: dict, forensic: dict, speaker: dict, consistency: dict | None, s: Settings) -> dict:
-    """Evaluate one challenge-response against the thresholds of the transaction's tier."""
+def judge(tier: str, challenge: dict, forensic: dict, speaker: dict, consistency: dict | None, s: Settings,
+          limits: dict | None = None, guarantee: dict | None = None) -> dict:
+    """Evaluate one challenge-response against the thresholds of the transaction's tier.
+
+    limits/guarantee: P(AI) limits per tier and what is known about them (voicelock.guarantee); without them the hand-set
+    s.ai_limit applies."""
     p_ai = forensic["p_ai"]
     anomaly = forensic["acoustic"]["anomaly_score"]
-    ai_limit = max(0.05, s.ai_limit[tier] - 0.10 * anomaly)       # acoustic anomalies tighten the limit slightly
+    base = (limits or s.ai_limit)[tier]
+    # acoustic anomalies only ever tighten the limit, so a calibrated guarantee stays valid (it becomes more conservative)
+    strict = bool(guarantee and guarantee.get("source") == "conformal")
+    ai_limit = base * (1 - 0.5 * anomaly) if strict else max(0.05, base - 0.10 * anomaly)
     sp_min = s.speaker_min[tier]
     sp = speaker["score"]
 
     checks = {
         "challenge": {"ok": bool(challenge["passed"]), "score": challenge["score"], "heard": challenge["heard"]},
-        "authenticity": {"ok": p_ai < ai_limit, "p_ai": round(p_ai, 3), "limit": round(ai_limit, 3), "verdict": forensic["verdict"]},
+        "authenticity": {"ok": p_ai < ai_limit, "p_ai": round(p_ai, 3), "limit": float(f"{ai_limit:.3g}"), "verdict": forensic["verdict"],
+                         "guarantee": guarantee},
         "speaker": {"ok": sp >= sp_min, "score": round(sp, 3), "min": sp_min},
         "consistency": {"ok": True if consistency is None else consistency["min"] >= s.consistency_min,
                         "min": None if consistency is None else round(consistency["min"], 3), "threshold": s.consistency_min},

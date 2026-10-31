@@ -1,0 +1,88 @@
+{
+ "method": "domain-robust conformal (generator = exchangeable unit), direct-capture audio",
+ "delta": 0.1,
+ "generators_used": 144,
+ "clips_used": 14048,
+ "detector_threshold": 0.8202397227287292,
+ "scope": "direct",
+ "tiers": {
+  "low": {
+   "alpha": 0.3,
+   "tau_logit": -4.143691992078438,
+   "p_ai_limit": 0.0034646794569600345,
+   "genuine_rejected_pooled": 0.5314067351325531,
+   "tau_naive_logit": 4.625279337261756,
+   "p_ai_limit_naive": 0.9571931418893722
+  },
+  "medium": {
+   "alpha": 0.2,
+   "tau_logit": -5.599819994177058,
+   "p_ai_limit": 0.0008098976373259777,
+   "genuine_rejected_pooled": 0.6059230952949606,
+   "tau_naive_logit": 1.780755770041348,
+   "p_ai_limit_naive": 0.5653203646041561
+  },
+  "high": {
+   "alpha": 0.1,
+   "tau_logit": -8.003074601487262,
+   "p_ai_limit": 7.328750967356665e-05,
+   "genuine_rejected_pooled": 0.7375208980176737,
+   "tau_naive_logit": -1.855183784119537,
+   "p_ai_limit_naive": 0.03314501295017285
+  },
+  "critical": {
+   "alpha": 0.05,
+   "tau_logit": -9.209636665957394,
+   "p_ai_limit": 2.1930524721336963e-05,
+   "genuine_rejected_pooled": 0.8741342249820874,
+   "tau_naive_logit": -4.827535828541324,
+   "p_ai_limit_naive": 0.0017515373803397689
+  }
+ },
+ "audit": {
+  "low": {
+   "p_ai_limit": 0.5,
+   "tau_logit": 1.5179724719965841,
+   "generators": 131,
+   "mean_generator_miss": 0.2688221068360761,
+   "median_generator_miss": 0.19607843137254902,
+   "pct_generators_miss_over_10pct": 0.6106870229007634,
+   "pct_generators_miss_over_25pct": 0.4351145038167939,
+   "mean_corpus_miss": 0.1841072141104324,
+   "genuine_rejected": 0.21721173678043587
+  },
+  "medium": {
+   "p_ai_limit": 0.45,
+   "tau_logit": 1.3173017765344328,
+   "generators": 131,
+   "mean_generator_miss": 0.26113431935832876,
+   "median_generator_miss": 0.18333333333333332,
+   "pct_generators_miss_over_10pct": 0.6030534351145038,
+   "pct_generators_miss_over_25pct": 0.42748091603053434,
+   "mean_corpus_miss": 0.1784309228111639,
+   "genuine_rejected": 0.22596355028183648
+  },
+  "high": {
+   "p_ai_limit": 0.35,
+   "tau_logit": 0.8989332635903606,
+   "generators": 131,
+   "mean_generator_miss": 0.24729038579641088,
+   "median_generator_miss": 0.16363636363636364,
+   "pct_generators_miss_over_10pct": 0.5877862595419847,
+   "pct_generators_miss_over_25pct": 0.4122137404580153,
+   "mean_corpus_miss": 0.16800167578773637,
+   "genuine_rejected": 0.24116046628120952
+  },
+  "critical": {
+   "p_ai_limit": 0.25,
+   "tau_logit": 0.41936018332847436,
+   "generators": 131,
+   "mean_generator_miss": 0.2285944416354695,
+   "median_generator_miss": 0.15121951219512195,
+   "pct_generators_miss_over_10pct": 0.5648854961832062,
+   "pct_generators_miss_over_25pct": 0.35877862595419846,
+   "mean_corpus_miss": 0.1538099099696018,
+   "genuine_rejected": 0.26225777432073005
+  }
+ }
+}

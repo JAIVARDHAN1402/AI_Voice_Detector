@@ -1,6 +1,7 @@
 """Security-logic tests for VoiceLock. The three ML models are replaced by stubs so these run in seconds and test the
 protocol (binding, single use, expiry, thresholds, audit chain), not the models."""
 import io
+import json
 import sys
 from pathlib import Path
 
@@ -11,9 +12,11 @@ import soundfile as sf
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from voicelock import challenge as ch  # noqa: E402
+from voicelock import risk  # noqa: E402
 from voicelock.api import create_app  # noqa: E402
 from voicelock.config import Settings  # noqa: E402
 from voicelock.crypto import Keys, canonical_txn, txn_hash  # noqa: E402
+from voicelock.guarantee import Guarantee  # noqa: E402
 from voicelock.service import VoiceLock, VoiceLockError  # noqa: E402
 from voicelock.speaker import SpeakerVerifier  # noqa: E402
 from voicelock.store import Store  # noqa: E402
@@ -72,6 +75,12 @@ class Clock:
 
     def __call__(self):
         return self.t
+
+
+@pytest.fixture(autouse=True)
+def _heuristic_limits_by_default(monkeypatch):
+    """The suite exercises the protocol with the hand-set limits; calibrated limits have their own tests below."""
+    monkeypatch.setenv("VOICELOCK_CONFORMAL", "0")
 
 
 @pytest.fixture
@@ -289,3 +298,82 @@ def test_silent_audio_is_a_failed_attempt_not_a_server_error(env):
     assert r["decision"] == "retry" and r["details"]["failed"] == ["audio"]
     with pytest.raises(VoiceLockError):
         vl.enroll("alice", wave(0))
+
+
+# ---------------------------------------------------------------------------------------------- audited / calibrated limits
+def _calibration(tmp_path, limits):
+    tiers = {t: {"alpha": a, "tau_logit": 0.0, "p_ai_limit": lim, "genuine_rejected_pooled": 0.1}
+             for (t, a), lim in zip((("low", 0.30), ("medium", 0.20), ("high", 0.10), ("critical", 0.05)), limits)}
+    audit = {t: {"p_ai_limit": 0.5, "generators": 131, "mean_generator_miss": 0.25, "pct_generators_miss_over_10pct": 0.6,
+                 "genuine_rejected": 0.22} for t in tiers}
+    (tmp_path / "conformal.json").write_text(json.dumps({"delta": 0.1, "generators_used": 120, "tiers": tiers, "audit": audit}))
+
+
+def test_guarantee_modes_and_fallbacks(tmp_path, monkeypatch):
+    s = Settings(data_dir=tmp_path, models_dir=tmp_path, conformal_path=tmp_path / "conformal.json")
+    assert not Guarantee(s).active and Guarantee(s).limits(s.ai_limit) == s.ai_limit          # no file -> heuristic
+    assert Guarantee(s).describe("low")["source"] == "heuristic"
+    _calibration(tmp_path, (0.4, 0.3, 0.2, 0.1))
+    monkeypatch.delenv("VOICELOCK_CONFORMAL", raising=False)                                   # default = audit
+    g = Guarantee(s)
+    assert g.active and not g.strict and g.limits(s.ai_limit) == s.ai_limit                    # audit keeps the default limits ...
+    d = g.describe("critical")
+    assert d["source"] == "audit" and d["mean_generator_miss"] == 0.25 and d["genuine_rejected"] == 0.22   # ... and reports their audit
+    monkeypatch.setenv("VOICELOCK_CONFORMAL", "strict")
+    g = Guarantee(s)
+    assert g.strict and g.limits(s.ai_limit)["critical"] == 0.1 and g.describe("critical")["alpha"] == 0.05
+    monkeypatch.setenv("VOICELOCK_CONFORMAL", "off")
+    assert not Guarantee(s).active
+    (tmp_path / "conformal.json").write_text("{not json")
+    monkeypatch.setenv("VOICELOCK_CONFORMAL", "strict")
+    g = Guarantee(s)
+    assert not g.active and g.mode == "off"                                                    # a corrupt file never crashes the service
+
+
+def test_strict_limits_gate_each_tier_and_report_the_guarantee(tmp_path, monkeypatch):
+    monkeypatch.setenv("VOICELOCK_CONFORMAL", "strict")
+    _calibration(tmp_path, (0.40, 0.30, 0.20, 0.05))
+    s = Settings(data_dir=tmp_path, models_dir=tmp_path, conformal_path=tmp_path / "conformal.json")
+    asr, fx = StubASR(), StubForensics()
+    vl = VoiceLock(s, speaker=StubSpeaker(), asr=asr, forensics=fx, store=Store(s.db_path), keys=Keys(tmp_path), clock=Clock())
+    for _ in range(3):
+        vl.enroll("alice", wave(spk=0))
+    fx.p_ai = 0.10                                                  # fine for a small transfer ...
+    low = vl.start_transaction(txn(amount="500"))
+    assert low["thresholds"]["guarantee"]["source"] == "conformal"          # (a new recipient lifts the tier by one)
+    assert low["thresholds"]["guarantee"]["alpha"] == {"low": 0.30, "medium": 0.20}[low["tier"]]
+    r = answer(vl, asr, low)
+    assert r["decision"] == "verified" and r["details"]["checks"]["authenticity"]["guarantee"]["confidence"] == 0.9
+    crit = vl.start_transaction(txn(amount="2000000"))              # ... but above the critical limit (0.05)
+    r = answer(vl, asr, crit)
+    assert r["decision"] in ("retry", "blocked") and "authenticity" in r["details"]["failed"]
+
+
+def test_audit_mode_keeps_default_limits_and_shows_the_audit(tmp_path, monkeypatch):
+    monkeypatch.setenv("VOICELOCK_CONFORMAL", "audit")
+    _calibration(tmp_path, (0.001, 0.001, 0.001, 0.001))            # strict limits would reject everything; audit must ignore them
+    s = Settings(data_dir=tmp_path, models_dir=tmp_path, conformal_path=tmp_path / "conformal.json")
+    asr, fx = StubASR(), StubForensics()
+    vl = VoiceLock(s, speaker=StubSpeaker(), asr=asr, forensics=fx, store=Store(s.db_path), keys=Keys(tmp_path), clock=Clock())
+    for _ in range(3):
+        vl.enroll("alice", wave(spk=0))
+    fx.p_ai = 0.10
+    started = vl.start_transaction(txn(amount="500"))
+    assert started["thresholds"]["ai_limit"] == s.ai_limit[started["tier"]]
+    assert started["thresholds"]["guarantee"]["source"] == "audit"
+    r = answer(vl, asr, started)
+    assert r["decision"] == "verified" and r["details"]["checks"]["authenticity"]["guarantee"]["source"] == "audit"
+
+
+def test_acoustic_anomaly_only_tightens_a_strict_limit(tmp_path, monkeypatch):
+    monkeypatch.setenv("VOICELOCK_CONFORMAL", "strict")
+    _calibration(tmp_path, (0.40, 0.30, 0.20, 0.05))
+    s = Settings(data_dir=tmp_path, models_dir=tmp_path, conformal_path=tmp_path / "conformal.json")
+    g = Guarantee(s)
+    fx = {"p_ai": 0.1, "verdict": "real", "windows": [], "acoustic": {"anomaly_score": 0.0, "flags": []}}
+    sp = {"score": 0.9}
+    ch_ = {"passed": True, "score": 1.0, "heard": ""}
+    clean = risk.judge("high", ch_, fx, sp, None, s, g.limits(s.ai_limit), g.describe("high"))
+    fx["acoustic"]["anomaly_score"] = 0.6
+    noisy = risk.judge("high", ch_, fx, sp, None, s, g.limits(s.ai_limit), g.describe("high"))
+    assert noisy["checks"]["authenticity"]["limit"] < clean["checks"]["authenticity"]["limit"] <= 0.20

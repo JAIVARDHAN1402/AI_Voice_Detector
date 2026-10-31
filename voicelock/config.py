@@ -15,6 +15,8 @@ class Settings:
     data_dir: Path = field(default_factory=lambda: Path(os.environ.get("VOICELOCK_DATA", ROOT / "data" / "voicelock")))
     models_dir: Path = field(default_factory=lambda: Path(os.environ.get("VOICELOCK_MODELS", ROOT / "models" / "voicelock")))
     api_key: str = os.environ.get("VOICELOCK_API_KEY", "")     # empty = no key required (local demo)
+    # audit + strict authenticity limits from the conformal study; one committed file shared with the browser build
+    conformal_path: Path = field(default_factory=lambda: Path(os.environ.get("VOICELOCK_CONFORMAL_FILE", ROOT / "web" / "vl" / "conformal.json")))
 
     # sessions / tokens
     challenge_ttl_s: float = _f("VOICELOCK_CHALLENGE_TTL", 90)

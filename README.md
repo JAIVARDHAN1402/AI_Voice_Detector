@@ -295,6 +295,37 @@ pauses (`SpeakerVerifier.prepare/consistency`, `web/vl/engine.js`): 0 % rejected
 * Not implemented: WebRTC streaming/live calls, Postgres (SQLite is used), React/Tailwind (the UI is plain HTML/JS), SIEM export, authentication of the API callers beyond one optional key, hosting (it needs a Python backend with the models; the Vercel site is the in-browser detector only).
 * Active voice liveness and multi-layer deepfake detection are patented areas; the combination here (transaction-bound, session-bound challenge with a signed token) has not been checked against patents.
 
+## Research: error guarantees on unseen AI generators (`research/PAPER.md`)
+
+**Question.** A detector's accuracy says little about how often an AI voice from a generator it has *never seen* is accepted as real. This study
+measures that with a nested **leave-one-corpus-out** protocol (9 corpora, 131 held-out generators; 45 detector fits per head), compares three ways of
+choosing the threshold, and adds **domain-robust conformal calibration** (the exchangeable unit is the generator, not the clip; `voicedetect/conformal.py`).
+
+**Results (direct-capture audio, target AI-accepted rate alpha = 10 %; MLP head; `reports/conformal_mlp.json`, logistic head replicates: `conformal_linear.json`).**
+
+| method | held-out corpora within alpha | held-out generators within alpha | mean AI accepted per generator | genuine speech rejected |
+|---|---|---|---|---|
+| fixed equal-error threshold (what the app did) | 44% | 39% | 26% | 16% |
+| naive split conformal | 67% | 53% | 15% | 35% |
+| **domain-robust conformal (ours)** | **89%** (nominal 90 %) | 75% | 6% | 70% |
+
+What this means, without spin:
+* Domain-robust calibration restores **corpus-level** validity, but per generator it is lower (75%) because generators cluster by corpus.
+* The bound is **expensive**: 70% of genuine speech is rejected at alpha = 10 %. With this detector a tight guarantee on unseen generators and a usable
+  genuine-user experience do not fit together; that is why the strict limits are an **opt-in**.
+* On simulated loudspeaker-to-microphone replay the detector is close to chance (AUC about 0.65), so no useful bound exists there.
+* VoiceLock's default per-tier limits, audited the same way: 23%-27% of an unseen generator's AI voices accepted on average,
+  22%-26% of genuine speech rejected.
+* **Splice weakness:** an AI segment pasted into real speech (1 of 4 windows AI) is detected 14% of the time at 5 % false alarms; no simple aggregation rule fixes it.
+
+**In VoiceLock** (`VOICELOCK_CONFORMAL`): `audit` (default) keeps the default limits and shows each tier's measured error on the result card; `strict` uses the calibrated limits
+(browser: the "Strict authenticity limit" switch); `off` shows nothing. Live page: `/research`.
+
+**Not done (stated in the paper):** official ASVspoof 2019 LA / In-the-Wild protocols, external baselines (AASIST, RawNet2), an adaptive white-box attacker, targeted voice clones of an enrolled
+speaker. Leave-one-corpus-out describes a *new corpus*; the shipped detector is trained on all corpora.
+
+Reproduce: `scripts/run_conformal.sh` (stage 1 `scripts/conformal_lodo.py` ~1 h, stage 2 `scripts/conformal_study.py`, export `scripts/export_research_web.py`, paper `scripts/build_paper.py`); tests: `pytest tests`.
+
 ## Tune it on your own voice
 
 Short version for a single labelled file of your own: `python scripts/prepare_user_clip.py --ai clip.mp4`, then

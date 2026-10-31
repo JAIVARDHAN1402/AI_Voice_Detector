@@ -11,6 +11,7 @@ from . import challenge as ch
 from . import risk
 from .config import Settings
 from .crypto import Keys, TokenError, canonical_txn, txn_hash, verify_token
+from .guarantee import Guarantee
 from .store import Store
 
 SR = 16000
@@ -40,6 +41,8 @@ class VoiceLock:
             from .forensics import Forensics
             forensics = Forensics()
         self.speaker, self.asr, self.forensics = speaker, asr, forensics
+        self.guarantee = Guarantee(self.s)
+        self.limits = self.guarantee.limits(self.s.ai_limit)       # tier -> P(AI) limit (conformal-calibrated when available)
         self._infer = threading.Lock()     # one model forward at a time (CPU); crypto/DB work stays concurrent
 
     # ------------------------------------------------------------------ helpers
@@ -85,7 +88,7 @@ class VoiceLock:
                 f = self.forensics.analyze(wave)
             except ValueError as e:                        # e.g. "No speech detected" from the detector
                 raise VoiceLockError(str(e)) from e
-            if f["p_ai"] >= self.s.ai_limit["low"]:        # never enrol a synthetic voice as the reference
+            if f["p_ai"] >= self.s.ai_limit["low"]:        # never enrol a synthetic voice as the reference (a fixed gate, not a tier guarantee)
                 self.store.log("enroll_rejected", None, user_id, reason="synthetic", p_ai=round(f["p_ai"], 3))
                 raise VoiceLockError("this sample looks synthetic and cannot be used as an enrolment sample", 422)
             emb = self.speaker.embed(self.speaker.prepare(wave))
@@ -120,7 +123,7 @@ class VoiceLock:
         self.store.log("session_started", sid, user, tier=a["tier"], reasons=a["reasons"], txn_hash=txn_hash(canon),
                        amount=canon["amount"], currency=canon["currency"])
         return {"session_id": sid, "tier": a["tier"], "risk": a, "transaction": canon, "txn_hash": txn_hash(canon), "challenge": c,
-                "thresholds": {"ai_limit": self.s.ai_limit[a["tier"]], "speaker_min": self.s.speaker_min[a["tier"]],
+                "thresholds": {"ai_limit": self.limits[a["tier"]], "guarantee": self.guarantee.describe(a["tier"]), "speaker_min": self.s.speaker_min[a["tier"]],
                                "passes_required": self.s.required_passes[a["tier"]]}}
 
     # ------------------------------------------------------------------ challenge response
@@ -161,7 +164,8 @@ class VoiceLock:
             return self._fail(sess, f"unusable audio: {e}", {"failed": ["audio"], "unusable": str(e)}, severe=[], audio=wave)
         latency = round(time.perf_counter() - t0, 3)
         c = ch.match(words, digits, heard, self.s.challenge_min_match)
-        verdict = risk.judge(sess["tier"], c, forensic, spk, cons, self.s)
+        verdict = risk.judge(sess["tier"], c, forensic, spk, cons, self.s, self.limits,
+                             self.guarantee.describe(sess["tier"]) if self.guarantee.active else None)
         verdict["latency_s"] = latency
         verdict["speaker"] = {**spk, "consistency": cons}
         verdict["authenticity"] = {k: forensic[k] for k in ("p_ai", "verdict", "windows")}

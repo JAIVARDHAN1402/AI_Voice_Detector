@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Research - error guarantees for AI-voice detection</title>
+<meta name="description" content="Domain-robust conformal calibration: how often does an AI voice from a generator the detector has never seen get accepted as real?">
+<link rel="stylesheet" href="vl/style.css">
+<style>
+  .lead{font-size:16px;margin:0 0 8px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0 4px}
+  .kpi{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .kpi b{display:block;font-size:22px}.kpi span{font-size:12px;color:var(--muted)}
+  svg{width:100%;height:auto;display:block}
+  svg text{fill:var(--muted);font:11px system-ui,sans-serif}
+  svg .grid{stroke:var(--line);stroke-width:1}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:6px 0 0}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:right}th:first-child,td:first-child{text-align:left}
+  th{font-weight:600;color:var(--muted)}
+  ul.limits{margin:6px 0 0;padding-left:18px}ul.limits li{margin:4px 0}
+  .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+  .three{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo" aria-hidden="true">&#128202;</span><div><h1>Research</h1><p>Error guarantees for AI-voice detection</p></div></div>
+  <nav class="nav"><a href="/">Detector</a><a href="/voicelock">VoiceLock</a><a href="/research" class="on">Research</a></nav>
+</header>
+
+<main>
+  <section class="card wide">
+    <h2>The question</h2>
+    <p class="lead">A detector says "90 % AI". Can you rely on that when the voice comes from a text-to-speech system it has <b>never seen</b>? For a
+      payment-authorisation system the costly mistake is an AI voice accepted as real.</p>
+    <p class="muted">We test this honestly: leave one whole corpus out of training, calibrate on the others, and count how often the held-out corpus's AI voices get
+      through. Ordinary (split) conformal calibration bounds that rate only for voices like the calibration voices. <b>Domain-robust conformal calibration</b> treats
+      the <i>generator</i> as the exchangeable unit (one threshold per generator, then a low quantile across generators).</p>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section class="card wide">
+    <h2>1 &middot; Does a target error rate survive an unseen corpus?</h2>
+    <div class="three">
+      <div><svg id="chCorpora" viewBox="0 0 420 260" role="img" aria-label="Share of held-out corpora meeting the target error"></svg>
+        <p class="muted small">Held-out <b>corpora</b> whose AI-accepted rate is within the target. Dotted = nominal confidence.</p></div>
+      <div><svg id="chGen" viewBox="0 0 420 260" role="img" aria-label="Share of held-out generators meeting the target error"></svg>
+        <p class="muted small">Held-out <b>generators</b> within the target (95 % CI).</p></div>
+      <div><svg id="chPrice" viewBox="0 0 420 260" role="img" aria-label="Genuine speech rejected"></svg>
+        <p class="muted small">The price: genuine speech rejected at the same thresholds.</p></div>
+    </div>
+    <div class="legend" id="legend"></div>
+    <p id="coverText" class="muted"></p>
+  </section>
+
+  <section class="card wide">
+    <h2>2 &middot; What VoiceLock's authenticity limits do on unseen generators</h2>
+    <div style="overflow-x:auto"><table id="auditTable"></table></div>
+    <p class="muted small" id="auditNote"></p>
+    <h3>Strict calibrated limits (optional switch on the VoiceLock page)</h3>
+    <div style="overflow-x:auto"><table id="tierTable"></table></div>
+    <p class="muted small">"P(AI) limit": a response at or above it is rejected.</p>
+  </section>
+
+  <section class="card wide">
+    <h2>3 &middot; Capture condition matters</h2>
+    <div style="overflow-x:auto"><table id="scopeTable"></table></div>
+    <p class="muted small" id="scopeNote"></p>
+  </section>
+
+  <section class="card wide">
+    <h2>4 &middot; Spliced recordings: a cloned challenge pasted into real speech</h2>
+    <div class="two">
+      <div><svg id="chSplice" viewBox="0 0 420 260" role="img" aria-label="Detection of spliced clips by aggregation rule"></svg></div>
+      <div><p id="spliceText" class="muted"></p><div class="legend" id="spliceLegend"></div></div>
+    </div>
+  </section>
+
+  <section class="card wide">
+    <h2>What this does not show</h2>
+    <ul class="limits" id="limits"></ul>
+  </section>
+</main>
+<script type="module" src="research.js"></script>
+</body>
+</html>
