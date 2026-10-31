@@ -6,3 +6,4 @@ data/
 # the 378 MB WavLM weights are downloaded, not committed (see README "Setup")
 models/wavlm-base-plus/pytorch_model.bin
 models/detector_base.joblib
+models/voicelock/

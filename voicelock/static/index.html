@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VoiceLock</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo" aria-hidden="true">&#128274;</span><div><h1>VoiceLock</h1><p>Transaction-bound voice authorisation</p></div></div>
+  <div class="pill" id="status">connecting&hellip;</div>
+</header>
+
+<main>
+  <section class="card" id="c-user">
+    <h2><span class="n">1</span>Enrol the speaker</h2>
+    <label>User id <input id="user" value="alice" maxlength="64" autocomplete="off"></label>
+    <div class="meter"><div id="enrollBar"></div></div>
+    <p class="muted" id="enrollText">0 / 3 samples</p>
+    <p class="prompt" id="enrollPrompt"></p>
+    <div class="row">
+      <button id="enrollRec" class="btn">Record sample</button>
+      <label class="btn ghost">Upload<input type="file" accept="audio/*" id="enrollFile" hidden></label>
+      <button id="enrollReset" class="btn ghost danger">Reset</button>
+    </div>
+    <p class="muted small">Enrolment samples are checked by the AI-voice detector too: a synthetic sample is refused.</p>
+  </section>
+
+  <section class="card" id="c-txn">
+    <h2><span class="n">2</span>Request a transfer</h2>
+    <div class="grid2">
+      <label>Amount <input id="amount" inputmode="decimal" value="50000"></label>
+      <label>Currency <input id="currency" value="INR" maxlength="3"></label>
+    </div>
+    <label>Recipient <input id="recipient" value="Sharma Traders Pvt Ltd" maxlength="120"></label>
+    <label>Reference <input id="reference" value="Invoice 2291" maxlength="200"></label>
+    <button id="start" class="btn primary">Request authorisation</button>
+    <div id="risk" class="risk hidden"></div>
+  </section>
+
+  <section class="card hidden" id="c-challenge">
+    <h2><span class="n">3</span>Speak the challenge <span class="chip" id="passChip"></span></h2>
+    <p class="muted">Say this phrase clearly. It was generated for <b>this</b> transaction and works once.</p>
+    <div class="phrase" id="phrase" aria-live="polite"></div>
+    <div class="row between"><span class="muted" id="timer"></span><span class="muted" id="txnLine"></span></div>
+    <div class="row">
+      <button id="rec" class="btn primary big">Start recording</button>
+      <label class="btn ghost">Upload audio instead<input type="file" accept="audio/*" id="respFile" hidden></label>
+    </div>
+    <p class="muted small">Uploading a file lets you play the part of an attacker (recording, TTS, cloned voice).</p>
+  </section>
+
+  <section class="card hidden" id="c-result">
+    <h2><span class="n">4</span>Decision</h2>
+    <div id="banner" class="banner"></div>
+    <div class="layers" id="layers"></div>
+    <div id="tokenBox" class="hidden">
+      <h3>Authorisation token <span class="muted small">Ed25519 &middot; single use &middot; bound to this transaction</span></h3>
+      <pre id="claims"></pre>
+      <div class="row">
+        <button id="execute" class="btn primary">Execute transfer with token</button>
+        <button id="tamper" class="btn ghost">Try a tampered amount</button>
+        <button id="replay" class="btn ghost">Replay the token</button>
+      </div>
+      <p id="execOut" class="muted"></p>
+    </div>
+  </section>
+
+  <section class="card wide" id="c-log">
+    <h2>Security log <span class="chip" id="chain">checking&hellip;</span> <button id="refreshLog" class="btn ghost small">Refresh</button></h2>
+    <div class="tablewrap"><table id="log"><thead><tr><th>#</th><th>Time</th><th>Event</th><th>Session</th><th>Details</th></tr></thead><tbody></tbody></table></div>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

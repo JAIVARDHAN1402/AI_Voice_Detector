@@ -183,7 +183,1302 @@
         "AI_accepted(FAR)": 0.008
       }
     },
-    "clip_level_eer": 0.9922,
+    "clip_level_eer": 0.0078,
     "note": "whole clips up to 8 s through the production Layer-1 pipeline"
+  },
+  "attacks_end_to_end": {
+    "genuine": {
+      "low": {
+        "n": 10,
+        "verified": 1.0,
+        "blocked": 0.0,
+        "layers_that_failed": {},
+        "latency_median_s": 2.97,
+        "latency_p95_s": 3.23
+      },
+      "high": {
+        "n": 10,
+        "verified": 1.0,
+        "blocked": 0.0,
+        "layers_that_failed": {},
+        "latency_median_s": 3.07,
+        "latency_p95_s": 3.24
+      }
+    },
+    "replay": {
+      "low": {
+        "n": 10,
+        "verified": 0.0,
+        "blocked": 1.0,
+        "layers_that_failed": {
+          "challenge": 10,
+          "speaker": 10
+        },
+        "latency_median_s": 4.62,
+        "latency_p95_s": 6.34
+      },
+      "high": {
+        "n": 10,
+        "verified": 0.0,
+        "blocked": 1.0,
+        "layers_that_failed": {
+          "challenge": 10,
+          "speaker": 10
+        },
+        "latency_median_s": 4.38,
+        "latency_p95_s": 5.51
+      }
+    },
+    "pretts": {
+      "low": {
+        "n": 10,
+        "verified": 0.0,
+        "blocked": 1.0,
+        "layers_that_failed": {
+          "challenge": 10,
+          "authenticity": 10,
+          "speaker": 10
+        },
+        "latency_median_s": 2.52,
+        "latency_p95_s": 2.73
+      },
+      "high": {
+        "n": 10,
+        "verified": 0.0,
+        "blocked": 1.0,
+        "layers_that_failed": {
+          "challenge": 10,
+          "authenticity": 10,
+          "speaker": 10
+        },
+        "latency_median_s": 2.55,
+        "latency_p95_s": 2.72
+      }
+    },
+    "live_tts": {
+      "low": {
+        "n": 10,
+        "verified": 0.0,
+        "blocked": 1.0,
+        "layers_that_failed": {
+          "authenticity": 10,
+          "speaker": 10
+        },
+        "latency_median_s": 3.48,
+        "latency_p95_s": 3.85
+      },
+      "high": {
+        "n": 10,
+        "verified": 0.0,
+        "blocked": 1.0,
+        "layers_that_failed": {
+          "authenticity": 10,
+          "speaker": 10
+        },
+        "latency_median_s": 3.57,
+        "latency_p95_s": 4.01
+      }
+    },
+    "live_tts_replayed": {
+      "low": {
+        "n": 10,
+        "verified": 0.0,
+        "blocked": 1.0,
+        "layers_that_failed": {
+          "speaker": 10,
+          "authenticity": 9,
+          "challenge": 2
+        },
+        "latency_median_s": 3.46,
+        "latency_p95_s": 3.85
+      },
+      "high": {
+        "n": 10,
+        "verified": 0.0,
+        "blocked": 1.0,
+        "layers_that_failed": {
+          "authenticity": 10,
+          "speaker": 10,
+          "challenge": 1
+        },
+        "latency_median_s": 3.62,
+        "latency_p95_s": 3.84
+      }
+    },
+    "note": "genuine = the enrolled speaker's own real recording of OTHER text with the transcript replaced by the expected phrase (a human reading arbitrary challenge phrases cannot be synthesised); attackers are NON-targeted TTS voices, not clones of the enrolled speaker. A challenge gets up to 4 tries (3 failures block).",
+    "raw": {
+      "genuine": [
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 3.263,
+          "tier": "low",
+          "p_ai": 0.062,
+          "speaker": 0.624,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 1.658,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.807,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 2.936,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.74,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 3.114,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.676,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 2.784,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.693,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 2.998,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.849,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 2.206,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.785,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 3.12,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.86,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 3.179,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.83,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 2.942,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.853,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 3.206,
+          "tier": "high",
+          "p_ai": 0.062,
+          "speaker": 0.624,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 1.61,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.807,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 3.061,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.74,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 3.109,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.676,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 2.89,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.693,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 3.132,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.849,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 2.367,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.785,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 3.264,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.86,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 3.083,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.83,
+          "challenge": 1.0
+        },
+        {
+          "decision": "verified",
+          "failed": [],
+          "latency": 3.023,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.853,
+          "challenge": 1.0
+        }
+      ],
+      "replay": [
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 7.05,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": -0.029,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 4.769,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": -0.034,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 4.464,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.214,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 4.028,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.045,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 2.985,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.009,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 3.253,
+          "tier": "low",
+          "p_ai": 0.001,
+          "speaker": -0.02,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 5.467,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.216,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 5.459,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": -0.024,
+          "challenge": 0.143
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 3.1,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.06,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 5.464,
+          "tier": "low",
+          "p_ai": 0.0,
+          "speaker": 0.253,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 5.196,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": -0.029,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 4.369,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": -0.034,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 4.399,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.214,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 3.957,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.045,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 2.966,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.009,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 3.178,
+          "tier": "high",
+          "p_ai": 0.001,
+          "speaker": -0.02,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 5.639,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.216,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 5.247,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": -0.024,
+          "challenge": 0.143
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 3.072,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.06,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "speaker"
+          ],
+          "latency": 5.359,
+          "tier": "high",
+          "p_ai": 0.0,
+          "speaker": 0.253,
+          "challenge": 0.0
+        }
+      ],
+      "pretts": [
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.642,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.026,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.461,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.044,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.523,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.121,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.47,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.059,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.661,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.074,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.78,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.07,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.533,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": -0.035,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.519,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.043,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.518,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.005,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.479,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": -0.001,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.439,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.017,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.558,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.057,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.547,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.123,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.532,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.059,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.638,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.062,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.789,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.069,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.567,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": -0.044,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.572,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.039,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.481,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.011,
+          "challenge": 0.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 2.417,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": -0.002,
+          "challenge": 0.0
+        }
+      ],
+      "live_tts": [
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.078,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": -0.04,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.114,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.098,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.703,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.074,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.132,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.018,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.907,
+          "tier": "low",
+          "p_ai": 0.976,
+          "speaker": 0.092,
+          "challenge": 0.857
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.286,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.023,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.257,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": -0.033,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.787,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.1,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.718,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": -0.014,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.679,
+          "tier": "low",
+          "p_ai": 1.0,
+          "speaker": 0.089,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.547,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": -0.008,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.348,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.066,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.666,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.093,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.702,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.024,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 4.21,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.087,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.592,
+          "tier": "high",
+          "p_ai": 0.998,
+          "speaker": 0.028,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.314,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.005,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.769,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.022,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.109,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": -0.071,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.462,
+          "tier": "high",
+          "p_ai": 1.0,
+          "speaker": 0.072,
+          "challenge": 1.0
+        }
+      ],
+      "live_tts_replayed": [
+        {
+          "decision": "blocked",
+          "failed": [
+            "speaker"
+          ],
+          "latency": 2.93,
+          "tier": "low",
+          "p_ai": 0.184,
+          "speaker": -0.004,
+          "challenge": 0.857
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.284,
+          "tier": "low",
+          "p_ai": 0.997,
+          "speaker": 0.01,
+          "challenge": 0.857
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.86,
+          "tier": "low",
+          "p_ai": 0.605,
+          "speaker": 0.06,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.848,
+          "tier": "low",
+          "p_ai": 0.99,
+          "speaker": -0.035,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.642,
+          "tier": "low",
+          "p_ai": 0.888,
+          "speaker": 0.062,
+          "challenge": 0.571
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.56,
+          "tier": "low",
+          "p_ai": 0.606,
+          "speaker": -0.0,
+          "challenge": 0.714
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.531,
+          "tier": "low",
+          "p_ai": 0.823,
+          "speaker": -0.018,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.311,
+          "tier": "low",
+          "p_ai": 0.873,
+          "speaker": -0.061,
+          "challenge": 0.857
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.136,
+          "tier": "low",
+          "p_ai": 0.995,
+          "speaker": 0.045,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.39,
+          "tier": "low",
+          "p_ai": 0.999,
+          "speaker": 0.046,
+          "challenge": 0.857
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.289,
+          "tier": "high",
+          "p_ai": 0.856,
+          "speaker": -0.015,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.663,
+          "tier": "high",
+          "p_ai": 0.806,
+          "speaker": -0.015,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.198,
+          "tier": "high",
+          "p_ai": 0.634,
+          "speaker": 0.07,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.571,
+          "tier": "high",
+          "p_ai": 0.989,
+          "speaker": -0.081,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "challenge",
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.774,
+          "tier": "high",
+          "p_ai": 0.922,
+          "speaker": 0.042,
+          "challenge": 0.429
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.289,
+          "tier": "high",
+          "p_ai": 0.534,
+          "speaker": 0.095,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.71,
+          "tier": "high",
+          "p_ai": 0.981,
+          "speaker": -0.036,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.704,
+          "tier": "high",
+          "p_ai": 0.996,
+          "speaker": -0.008,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.413,
+          "tier": "high",
+          "p_ai": 0.952,
+          "speaker": 0.061,
+          "challenge": 1.0
+        },
+        {
+          "decision": "blocked",
+          "failed": [
+            "authenticity",
+            "speaker"
+          ],
+          "latency": 3.902,
+          "tier": "high",
+          "p_ai": 0.809,
+          "speaker": -0.093,
+          "challenge": 1.0
+        }
+      ]
+    }
   }
 }

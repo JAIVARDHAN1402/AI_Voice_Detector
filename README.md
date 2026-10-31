@@ -31,6 +31,22 @@ scripts in the order below.
 
 ## How good is it? (honest numbers)
 
+**Latest model** (`reports/evaluation.json`; after removing the silence shortcut, tuning on the 18 user segments, ChatGPT voices):
+pooled held-out accuracy **87.8 %**, AUC 0.951 across clean, augmented and speaker-to-mic audio. With the verdict band
+(real <= 0.22, AI >= 0.50): AI called "real" 8 %, real called "AI" 12 %, real called real 82 %, AI called AI 88 %.
+New generators never trained on: MLAAD 82.5 %, ASVspoof 5 A29-A32 89.5 %, ChatGPT voices (onyx, shimmer, app Juniper) 92 %.
+Independent `ood_check.py`: LibriSpeech test-clean real 96 % correct / 4 % wrong, Windows + Google TTS 100 %.
+The tables below were measured on earlier versions of the model; they show the shape of the results, not the exact current values.
+
+### The silence shortcut (fixed)
+
+`asv_train`, `asv_test` and `unidata` kept long leading/trailing silence, and its length differed between real and fake
+(asv_test: real 1.4 s vs fake 0.6 s). The model partly learned "less silence = fake". The app trims silence, so on the very same
+real ASVspoof clips the production pipeline said "AI" for 83 % of them while a training-style window said "real". These three
+sets are now trimmed exactly like the app does (`scripts/extract_features.py: TRIM_SETS`), features re-extracted, model retrained.
+Production-pipeline acceptance of those real clips: 17 % -> 98 %. Pooled held-out accuracy fell from 89.4 % to 87.8 % - the old
+number was partly the shortcut.
+
 Everything is evaluated on **speakers/recordings the model never saw** during that evaluation. "Augmented" = the same
 test audio pushed through MP3/AAC/Opus codecs, noise, reverb or band-limiting (closer to a phone or browser mic).
 
@@ -205,7 +221,61 @@ decisions on 80 windows; the browser pipeline gave the same verdicts as the Pyth
 clip durations (P(AI) within a few points; ~0.4 s per 3 s segment on a laptop).
 The "Teach it" tab and `tune_user.py` are part of the local Flask app only.
 
+## VoiceLock: transaction-bound voice authorisation
+
+A voice detector alone is not a security control: a cloned voice that passes it still sounds like the CEO on the phone.
+VoiceLock (`voicelock/`, `python -m voicelock` -> http://127.0.0.1:8010) makes the detector one layer of an authorisation flow in
+which a recorded or pre-generated voice cannot approve an action.
+
+```
+request (user, amount, recipient)  ->  risk tier + a challenge derived from THIS transaction
+spoken response  ->  1 AI-voice forensics   (this project's detector + acoustic checks)
+                 ->  2 speaker identity     (ECAPA-TDNN cosine to the enrolled voiceprint, per-segment consistency)
+                 ->  3 transaction challenge (Whisper: did they say the phrase for this transaction?)
+                 ->  4 risk engine           (ALL layers must pass; tier tightens thresholds; critical = 2 independent challenges)
+verified -> single-use Ed25519 token bound to the transaction hash      blocked -> security incident in the audit log
+```
+
+* **Challenge** = 3 words + 4 digits from `HMAC-SHA256(server secret, txn hash, session id, nonce, pass)`: unpredictable, valid for
+  90 s, answerable once, different for every transaction/session. 2.9 billion phrases.
+* **Token** = JWS (EdDSA) with the SHA-256 of the canonical transaction (user, amount, currency, recipient, reference); it expires
+  in 60 s and is consumed atomically on first use. `POST /v1/demo/transfer` is a mock payment API that refuses anything without a valid token.
+* **Audit log** = SQLite rows hash-chained with SHA-256 (`/v1/events/verify` detects an edited, deleted or reordered event). Audio is never stored, only a hash.
+* **Risk tiers** (amount, new recipient, request velocity, off-hours) set the P(AI) limit (0.50 -> 0.25), the speaker threshold (0.40 -> 0.55) and the number of challenges (1 -> 2).
+* Layer failures give a fresh challenge (3 failed attempts block); an almost-certainly-synthetic response (P(AI) >= 0.9) or a voice that is plainly someone else blocks immediately.
+* API: `POST /v1/users/{id}/enroll`, `POST /v1/transactions`, `POST /v1/sessions/{id}/respond`, `POST /v1/tokens/verify`, `POST /v1/demo/transfer`, `GET /v1/events`, `GET /v1/events/verify`, Swagger at `/docs`. Optional `VOICELOCK_API_KEY`.
+* Models (ECAPA 85 MB, Whisper tiny.en 150 MB) load from `models/voicelock/` or are downloaded from Hugging Face on first use. Tests: `pytest tests/test_voicelock.py` (18 protocol tests with stubbed models).
+
+### What was measured (`scripts/voicelock_eval.py`, `reports/voicelock_eval.json`)
+
+| Experiment | Result |
+|---|---|
+| Speaker verification, 64 speakers, 4 s clips, 3 enrolment samples | EER **0.65 %**; at the tier thresholds 0.40/0.45/0.50/0.55: false accept 1.6 / 0.6 / 0.09 / 0.02 %, false reject 0.7 / 0.7 / 0.7 / 2.6 % |
+| ...with noise added to the genuine speaker | false reject at SNR 10 dB: 3 / 10 / 32 / 52 %; at 5 dB: 20 / 40 / 58 / 80 % (low / medium / high / critical) |
+| Challenge recognition (TTS reading the phrase) | accepted clean 96 %, SNR 10 dB 92 %, SNR 5 dB 83 %, loudspeaker->mic simulation **69 %**; a wrong phrase accepted 0 / 48 |
+| Token tampering, 2000 trials each (payload bit flip, signature bit flip, re-signed with another key, other amount/recipient) | **0 accepted**; expired token rejected |
+| End to end, 10 LibriSpeech speakers, low and high tier | genuine user verified 10/10 and 10/10; replay of someone's recording, pre-made TTS, live TTS of the challenge, and live TTS played through a loudspeaker: **0 verified** in every case (40 attack trials per tier). Median latency 3.0-4.6 s on CPU |
+| Layer 1 alone, 239 AI clips (ASVspoof 2019 + 5, MLAAD, OpenAI voices, Microsoft voices) vs 138 real | AI accepted 1.3 %, real accepted 99 %, EER 0.8 % (**these clips were in the detector's training data**: a pipeline check, not a generalisation number) |
+
+### What is NOT proven (read before trusting this)
+
+* **No voice-cloning attack was run.** There is no zero-shot cloning model in this project. The attackers above are TTS voices that
+  do not sound like the enrolled speaker, so the speaker layer stopped them by itself. A real clone of the victim's voice, spoken live, is
+  the threat that matters; against it only Layer 1 (and latency/liveness you add) remains, and Layer 1 is ~88 % on held-out generators, not 100 %.
+  The challenge defeats replays and pre-recorded/pre-generated audio, **not** a real-time clone that reads the challenge aloud.
+* The "genuine user" trials use the user's real recordings of *other* text with the transcript replaced by the expected phrase (a person
+  reading arbitrary phrases was not available). Recognition of a human reading the phrase was only measured with TTS. Try it with the mic before relying on it.
+* 10 speakers x 2 tiers is small; the intervals are wide. Speaker-verification data is clean read speech from a single session.
+* Replay detection is the detector's training on simulated loudspeaker->mic audio plus crude acoustic heuristics, not a dedicated model (AASIST / RawNet2 were not trained).
+* Not implemented: WebRTC streaming/live calls, Postgres (SQLite is used), React/Tailwind (the UI is plain HTML/JS), SIEM export, authentication of the API callers beyond one optional key, hosting (it needs a Python backend with the models; the Vercel site is the in-browser detector only).
+* Active voice liveness and multi-layer deepfake detection are patented areas; the combination here (transaction-bound, session-bound challenge with a signed token) has not been checked against patents.
+
 ## Tune it on your own voice
+
+Short version for a single labelled file of your own: `python scripts/prepare_user_clip.py --ai clip.mp4`, then
+`extract_features.py user --max-win 4 --aug-frac 1.0 --fresh`, `extract_replay.py user`, `train.py final` (the `user` set is up-weighted
+by `USER_WEIGHT`), `export_classifier.py`. One file fixes that voice; it does not prove other voices from the same generator are fixed.
+The "Teach it" flow below needs 6+ clips of each kind.
 
 1. Open the app, go to the **Teach it** tab. Record 20+ clips (8-15 s each) of your real voice, and add 20+ AI-voice clips
    (upload files from different generators, and/or play an AI voice out loud while recording it). Clips are saved
