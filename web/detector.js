@@ -141,7 +141,7 @@ export async function decodeToMono16k(arrayBuffer) {
     if (ctx) ctx.close();
     ctx = new AC();
     try { buf = await ctx.decodeAudioData(arrayBuffer.slice(0)); }
-    catch (e2) { ctx.close(); throw new AudioError('Could not read this audio file. Try WAV, MP3, M4A, FLAC, OGG or WebM.'); }
+    catch (e2) { ctx.close(); throw new AudioError('Could not read this file. Try WAV, MP3, M4A, MP4, FLAC, OGG or WebM (video files work if they contain an audio track).'); }
   }
   ctx.close();
   if (buf.sampleRate !== SR) {                            // fallback path: resample offline

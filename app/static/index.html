@@ -67,7 +67,7 @@
       <b>Drop an audio file here</b> or click to browse<br>
       <small>wav, mp3, m4a, flac, ogg, webm &middot; up to 25 MB</small>
     </div>
-    <input type="file" id="file" accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg,.webm,.aac" hidden>
+    <input type="file" id="file" accept="audio/*,video/*,.wav,.mp3,.m4a,.flac,.ogg,.opus,.webm,.aac,.mp4,.m4v,.mov,.mkv,.3gp" hidden>
     <audio id="player-up" controls hidden></audio>
   </section>
 
@@ -93,7 +93,7 @@
       <span id="ttimer" class="hint" style="margin:0">0:00</span>
       <button class="tab" id="tup" style="flex:none;padding:11px 18px">Upload files&hellip;</button>
     </div>
-    <input type="file" id="tfile" accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg,.webm,.aac" multiple hidden>
+    <input type="file" id="tfile" accept="audio/*,video/*,.wav,.mp3,.m4a,.flac,.ogg,.opus,.webm,.aac,.mp4,.m4v,.mov,.mkv,.3gp" multiple hidden>
     <canvas id="twave" width="680" height="72"></canvas>
     <div class="hint" id="tcounts"></div>
     <div class="hint" id="tmsg" role="status"></div>
