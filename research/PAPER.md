@@ -174,9 +174,21 @@ Calibrating on the out-of-domain scores of all 144 generators gives the strict p
 On average 23%–27% of an unseen generator's AI voices fall under the default limits and 56%–61% of generators exceed 10%, with 22%–26% of
 genuine speech rejected. The default limits are usable but carry no guarantee; they get tighter across tiers only slightly, because detector scores saturate. The shipped detector is trained on every corpus, so a truly new generator may do better or worse than leave-one-corpus-out suggests.
 
-### 5.6 Reference baselines
+### 5.6 Detector quality per held-out corpus and a classical baseline
 
-No external baselines (AASIST, RawNet2) or official-protocol numbers (ASVspoof 2019 LA eval, In-the-Wild) were run; this is stated in §7.
+**Table 7.** Clean audio, corpus never seen in training (clip-level EER / AUC). The MFCC baseline uses up to 500 real + 500 AI clips per corpus and the same protocol; it is not a published system.
+
+| held-out corpus | WavLM + MLP: EER / AUC | WavLM + logistic: EER / AUC | MFCC + logistic (baseline): EER / AUC |
+|---|---|---|---|
+| gary | 10.9% / 0.943 | 14.2% / 0.924 | 18.3% / 0.892 |
+| unidata | 10.0% / 0.969 | 22.5% / 0.916 | 35.8% / 0.765 |
+| asv_train | 6.2% / 0.983 | 11.9% / 0.953 | 33.0% / 0.729 |
+| cv | 10.4% / 0.938 | 15.7% / 0.924 | 37.7% / 0.687 |
+| libri | 3.1% / 0.988 | 5.2% / 0.990 | 37.7% / 0.695 |
+| asv5 | 21.9% / 0.870 | 21.7% / 0.853 | 51.5% / 0.503 |
+| asv_test (ASVspoof 2019 LA evaluation attacks A07–A19, our 750-clip subset) | 13.4% / 0.931 | 18.0% / 0.909 | 48.0% / 0.549 |
+
+The WavLM + MLP detector has the lower EER than the MFCC baseline on 7 of 7 corpora, but its error on a new corpus is far from the sub-1% EERs published for in-domain ASVspoof 2019 LA: on the LA evaluation attacks (trained with the LA training attacks plus the other corpora; our 750-clip subset, not the official protocol) it reaches 13.4% EER. No published external baseline (AASIST, RawNet2) and no official-protocol run (full ASVspoof 2019 LA eval, In-the-Wild) was performed; this is stated in §7.
 
 ### 5.7 Spliced recordings
 

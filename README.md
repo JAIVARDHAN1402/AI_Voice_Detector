@@ -316,6 +316,7 @@ What this means, without spin:
 * On simulated loudspeaker-to-microphone replay the detector is close to chance (AUC about 0.65), so no useful bound exists there.
 * VoiceLock's default per-tier limits, audited the same way: 23%-27% of an unseen generator's AI voices accepted on average,
   22%-26% of genuine speech rejected.
+* Detector quality on a corpus it never saw (clean audio, clip level): EER 3-22% (WavLM + MLP) vs 18-52% for an MFCC + logistic baseline under the same protocol (`scripts/baseline_mfcc.py`); on the ASVspoof 2019 LA evaluation attacks (our 750-clip subset, not the official protocol) 13.4% EER, far from published in-domain numbers.
 * **Splice weakness:** an AI segment pasted into real speech (1 of 4 windows AI) is detected 14% of the time at 5 % false alarms; no simple aggregation rule fixes it.
 
 **In VoiceLock** (`VOICELOCK_CONFORMAL`): `audit` (default) keeps the default limits and shows each tier's measured error on the result card; `strict` uses the calibrated limits

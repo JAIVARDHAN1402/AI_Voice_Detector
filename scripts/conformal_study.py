@@ -187,6 +187,29 @@ def audit_limits(H, conds, thr, limits=HAND_LIMITS):
     return res
 
 
+# ---------------------------------------------------------------- detector quality per held-out corpus (leave-one-corpus-out)
+def eer_auc(y, s):
+    from sklearn.metrics import roc_auc_score
+    fpr, tpr, _ = roc_curve(y, s)
+    i = int(np.nanargmin(np.abs((1 - tpr) - fpr)))
+    return float((fpr[i] + 1 - tpr[i]) / 2), float(roc_auc_score(y, s))
+
+
+def detector_quality(H):
+    """Clip-level EER / AUC of the detector on each corpus it never saw (needs real and AI clips in the corpus)."""
+    out = {}
+    for D in H["domains"]:
+        row = {}
+        for name, conds in (("clean", ("clean",)), ("direct", SCOPES["direct"]), ("replay", ("replay",))):
+            t = clip_table(H["meta"][D], H["scores"][(D,)][D], conds)
+            if len(set(t["y"])) < 2:
+                continue
+            eer, auc = eer_auc(t["y"], t["s"])
+            row[name] = {"eer": eer, "auc": auc, "n_real": int((t["y"] == 0).sum()), "n_fake": int((t["y"] == 1).sum())}
+        out[D] = row
+    return out
+
+
 # ---------------------------------------------------------------- splice study (window level)
 def splice_study(H, M=4, n=20000, fpr=0.05):
     """Pseudo-clips of M windows, k of them AI (a cloned challenge pasted into a real recording); window scores are the
@@ -293,7 +316,7 @@ def build_report(H):
     report = {"head": H["head"], "delta": DELTA, "alphas": ALPHAS, "nmin": NMIN, "eval_min": EVAL_MIN, "primary_scope": "direct",
               "scopes_definition": {k: (list(v) if v else "all conditions") for k, v in SCOPES.items()},
               "summary": S, "other_scopes": {k: v for k, v in scopes.items() if k != "direct"},
-              "audit_default_limits": audit_limits(H, SCOPES["direct"], thr), "splice": splice_study(H),
+              "audit_default_limits": audit_limits(H, SCOPES["direct"], thr), "splice": splice_study(H), "per_corpus_quality": detector_quality(H),
               "deployment_calibration": deployment_calibration(H), "delta_sweep_at_alpha_10pct": delta_rows, "domains": H["domains"],
               "naive_in_domain_check": {f"{al}": S[f"naive_in_domain@{al}"]["mean_miss"] for al in ALPHAS}}
     return report, rows_by_scope["direct"]

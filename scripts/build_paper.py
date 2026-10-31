@@ -14,6 +14,7 @@ mlp = json.loads((R / "conformal_mlp.json").read_text())
 lin = json.loads((R / "conformal_linear.json").read_text()) if (R / "conformal_linear.json").exists() else None
 ev = json.loads((R / "evaluation.json").read_text())
 vl = json.loads((R / "voicelock_eval.json").read_text()) if (R / "voicelock_eval.json").exists() else None
+base = json.loads((R / "baseline_mfcc.json").read_text()) if (R / "baseline_mfcc.json").exists() else None
 
 A = mlp["alphas"]
 dep = mlp["deployment_calibration"]
@@ -71,6 +72,19 @@ def table_strict():
     rows = ["| tier | target α | strict P(AI) limit | genuine speech rejected (pooled) |", "|---|---|---|---|"]
     for t, v in dep["tiers"].items():
         rows.append(f"| {t} | {pc(v['alpha'])} | {pc(v['p_ai_limit'], 3)} | {pc(v['genuine_rejected_pooled'], 1)} |")
+    return "\n".join(rows)
+
+
+def table_quality():
+    q_m, q_l = mlp["per_corpus_quality"], (lin["per_corpus_quality"] if lin else {})
+    b = base["per_corpus"] if base else {}
+    rows = ["| held-out corpus | WavLM + MLP: EER / AUC | WavLM + logistic: EER / AUC | MFCC + logistic (baseline): EER / AUC |", "|---|---|---|---|"]
+    fmt = lambda v: "n/a" if not v else f"{pc(v['eer'], 1)} / {v['auc']:.3f}"  # noqa: E731
+    for c in mlp["domains"]:
+        if not q_m.get(c):
+            continue
+        label = c + (" (ASVspoof 2019 LA evaluation attacks A07–A19, our 750-clip subset)" if c == "asv_test" else "")
+        rows.append(f"| {label} | {fmt(q_m[c].get('clean'))} | {fmt(q_l.get(c, {}).get('clean'))} | {fmt(b.get(c))} |")
     return "\n".join(rows)
 
 
@@ -246,9 +260,13 @@ Calibrating on the out-of-domain scores of all {dep['generators_used']} generato
 On average {pc(crit['mean_generator_miss'])}–{pc(low_t['mean_generator_miss'])} of an unseen generator's AI voices fall under the default limits and {pc(crit['pct_generators_miss_over_10pct'])}–{pc(low_t['pct_generators_miss_over_10pct'])} of generators exceed 10%, with {pc(low_t['genuine_rejected'])}–{pc(crit['genuine_rejected'])} of
 genuine speech rejected. The default limits are usable but carry no guarantee; they get tighter across tiers only slightly, because detector scores saturate. The shipped detector is trained on every corpus, so a truly new generator may do better or worse than leave-one-corpus-out suggests.
 
-### 5.6 Reference baselines
+### 5.6 Detector quality per held-out corpus and a classical baseline
 
-No external baselines (AASIST, RawNet2) or official-protocol numbers (ASVspoof 2019 LA eval, In-the-Wild) were run; this is stated in §7.
+**Table 7.** Clean audio, corpus never seen in training (clip-level EER / AUC). The MFCC baseline uses up to 500 real + 500 AI clips per corpus and the same protocol; it is not a published system.
+
+{table_quality()}
+
+{(f"The WavLM + MLP detector has the lower EER than the MFCC baseline on {sum(mlp['per_corpus_quality'][c]['clean']['eer'] < base['per_corpus'][c]['eer'] for c in base['per_corpus'] if mlp['per_corpus_quality'].get(c))} of {sum(1 for c in base['per_corpus'] if mlp['per_corpus_quality'].get(c))} corpora, but its error on a new corpus is far from the sub-1% EERs published for in-domain ASVspoof 2019 LA: on the LA evaluation attacks (trained with the LA training attacks plus the other corpora; our 750-clip subset, not the official protocol) it reaches {pc(mlp['per_corpus_quality']['asv_test']['clean']['eer'], 1)} EER. " if base else '')}No published external baseline (AASIST, RawNet2) and no official-protocol run (full ASVspoof 2019 LA eval, In-the-Wild) was performed; this is stated in §7.
 
 ### 5.7 Spliced recordings
 

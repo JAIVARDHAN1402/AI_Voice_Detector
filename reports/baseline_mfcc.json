@@ -1,0 +1,49 @@
+{
+  "features": "MFCC20 + delta, mean/std over 3 s",
+  "clips_per_corpus": "<=500 real + <=500 AI",
+  "protocol": "leave-one-corpus-out, clean audio",
+  "per_corpus": {
+    "gary": {
+      "eer": 0.183,
+      "auc": 0.891836,
+      "n_real": 500,
+      "n_fake": 500
+    },
+    "unidata": {
+      "eer": 0.3583333333333334,
+      "auc": 0.765,
+      "n_real": 20,
+      "n_fake": 60
+    },
+    "asv_train": {
+      "eer": 0.33,
+      "auc": 0.729268,
+      "n_real": 500,
+      "n_fake": 500
+    },
+    "cv": {
+      "eer": 0.37663939083986814,
+      "auc": 0.6873281054665302,
+      "n_real": 420,
+      "n_fake": 419
+    },
+    "libri": {
+      "eer": 0.37661244562133533,
+      "auc": 0.6951957631927368,
+      "n_real": 311,
+      "n_fake": 170
+    },
+    "asv5": {
+      "eer": 0.515,
+      "auc": 0.5030600000000001,
+      "n_real": 500,
+      "n_fake": 500
+    },
+    "asv_test": {
+      "eer": 0.48,
+      "auc": 0.5493649999999999,
+      "n_real": 400,
+      "n_fake": 500
+    }
+  }
+}
