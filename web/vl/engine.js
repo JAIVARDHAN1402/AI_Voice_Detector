@@ -9,6 +9,7 @@
 // protocol, not a security boundary. A real deployment keeps the secret/keys/state on a server (the Python package does that).
 import * as ort from '../ort/ort.wasm.min.mjs';
 import { Detector, AudioError, decodeToMono16k } from '../detector.js';
+import { trimSilence, speechFraction } from '../dsp.js';
 import { fetchRobust } from './loader.js';
 
 export const SR = 16000;
@@ -303,11 +304,19 @@ async function embed(wave) {
   const out = await MODELS.speaker.run({ audio: new ort.Tensor('float32', Float32Array.from(wave), [1, wave.length]) });
   return unit(out[Object.keys(out)[0]].data);
 }
+// Speech-only audio for the speaker layers: leading/trailing silence and room tone carry no voice and wreck the embedding.
+const speechWave = w => { const t = trimSilence(w, 35); return t.length >= SR ? t : w; };
+// Does every 2 s *speech* segment sound like the same speaker as the whole response? Segments that are mostly pauses or room tone are
+// skipped (their embeddings are meaningless: on real recordings with pauses the unfiltered check rejected 71 % of genuine clips).
 async function consistency(wave, full) {
   const n = 2 * SR, h = SR;
   if (wave.length < n + h) return null;
   const sims = [];
-  for (let s = 0; s + n <= wave.length; s += h) sims.push(dot(await embed(wave.subarray(s, s + n)), full));
+  for (let s = 0; s + n <= wave.length; s += h) {
+    const seg = wave.subarray(s, s + n);
+    if (speechFraction(seg) >= 0.6) sims.push(dot(await embed(seg), full));
+  }
+  if (sims.length < 2) return null;
   return { min: Math.min(...sims), mean: sims.reduce((a, b) => a + b, 0) / sims.length, segments: sims.length };
 }
 function speakerScore(enrolled, emb) {
@@ -370,7 +379,7 @@ export async function enroll(userId, wave) {
   let f;
   try { f = await forensics(wave); } catch (e) { if (e instanceof AudioError) throw new VLError(e.message); throw e; }
   if (f.p_ai >= CFG.aiLimit.low) { await log('enroll_rejected', null, userId, { reason: 'synthetic', p_ai: +f.p_ai.toFixed(3) }); throw new VLError('this sample looks synthetic and cannot be used as an enrolment sample', 422); }
-  const emb = await embed(wave);
+  const emb = await embed(speechWave(wave));
   S.users[userId] = S.users[userId] || { voiceprints: [], known: [] };
   S.users[userId].voiceprints.push(f32ToB64(emb)); save();
   await log('enroll', null, userId, { samples: S.users[userId].voiceprints.length, audio: await audioId(wave), p_ai: +f.p_ai.toFixed(3) });
@@ -452,9 +461,10 @@ export async function respond(sid, wave) {
   try {
     heard = await transcribe(wave);
     forensic = await forensics(wave);
-    emb = await embed(wave);
+    const speech = speechWave(wave);
+    emb = await embed(speech);
     spk = speakerScore(S.users[user].voiceprints.map(b64ToF32), emb);
-    cons = await consistency(wave, emb);
+    cons = await consistency(speech, emb);
   } catch (e) {
     if (e instanceof AudioError) return fail(sess, `unusable audio: ${e.message}`, { failed: ['audio'], unusable: e.message }, [], wave);
     throw e;

@@ -137,8 +137,9 @@ function showResult(r) {
     $('layers').innerHTML =
       layerCard('1 &middot; AI-voice forensics', c.authenticity.ok, [['P(AI)', pct(c.authenticity.p_ai)], ['limit', '< ' + pct(c.authenticity.limit)], ['detector', c.authenticity.verdict],
         ['acoustic anomaly', a.anomaly_score ?? 0], ['noise floor', (a.noise_floor_db ?? '') + ' dB']], a.flags) +
-      layerCard('2 &middot; Speaker identity', c.speaker.ok && c.consistency.ok, [['match', c.speaker.score], ['required', '≥ ' + c.speaker.min],
-        ['voice consistency', c.consistency.min === null ? 'n/a (short)' : c.consistency.min]]) +
+      layerCard('2 &middot; Speaker identity', c.speaker.ok && c.consistency.ok, [
+        ['speaker match', `${c.speaker.score} ${c.speaker.ok ? '✓' : '✗'} (need ≥ ${c.speaker.min})`],
+        ['voice consistency', c.consistency.min === null ? 'n/a (short or few speech segments)' : `${c.consistency.min} ${c.consistency.ok ? '✓' : '✗'} (need ≥ ${c.consistency.threshold})`]]) +
       layerCard('3 &middot; Transaction challenge', c.challenge.ok, [['match', pct(c.challenge.score)], ['heard', c.challenge.heard || '(nothing)']]) +
       layerCard('4 &middot; Risk &amp; authorisation', r.decision === 'verified' || r.decision === 'step_up', [['tier', r.tier], ['trust score', d.trust_score],
         ['passes', r.passes !== undefined ? `${r.passes}/${r.passes_required}` : '—'], ['time', (d.latency_s ?? '—') + ' s']], d.severe || []);

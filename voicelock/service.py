@@ -88,7 +88,7 @@ class VoiceLock:
             if f["p_ai"] >= self.s.ai_limit["low"]:        # never enrol a synthetic voice as the reference
                 self.store.log("enroll_rejected", None, user_id, reason="synthetic", p_ai=round(f["p_ai"], 3))
                 raise VoiceLockError("this sample looks synthetic and cannot be used as an enrolment sample", 422)
-            emb = self.speaker.embed(wave)
+            emb = self.speaker.embed(self.speaker.prepare(wave))
         self.store.ensure_user(user_id)
         n = self.store.add_voiceprint(user_id, emb)
         self.store.log("enroll", None, user_id, samples=n, audio=self._audio_id(wave), p_ai=round(f["p_ai"], 3))
@@ -152,10 +152,11 @@ class VoiceLock:
             with self._infer:
                 heard = self.asr.transcribe(wave)
                 forensic = self.forensics.analyze(wave)
-                emb = self.speaker.embed(wave)
+                speech = self.speaker.prepare(wave)
+                emb = self.speaker.embed(speech)
                 enrolled = self.store.voiceprints(user)
                 spk = self.speaker.score(enrolled, emb)
-                cons = self.speaker.consistency(wave, emb)
+                cons = self.speaker.consistency(speech, emb)
         except ValueError as e:                            # silent / unusable audio: a failed attempt, never a server error
             return self._fail(sess, f"unusable audio: {e}", {"failed": ["audio"], "unusable": str(e)}, severe=[], audio=wave)
         latency = round(time.perf_counter() - t0, 3)

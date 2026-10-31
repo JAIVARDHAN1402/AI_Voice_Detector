@@ -276,6 +276,12 @@ blocked (P(AI) 0.88, speaker 0.05); the enrolled speaker's real recording -> lay
 phrase check relaxed for the test: verified, token executes once, tampered amount and replay denied, hash chain valid. A response takes
 ~3-5 s on a laptop (about 9 s in a background browser tab).
 
+**Voice-consistency fix.** The first version of the "voice consistency" check (2 s segments vs the whole response) failed genuine users:
+real microphone recordings have pauses and room tone, and a segment without speech has a meaningless embedding (a user got
+consistency -0.09 with speaker match 0.71). Measured on 32 real clips with 1.6 s lead-in, a 1.4 s mid-clip pause and a 1.8 s tail: the old
+check rejected 71 % of genuine clips; now the speaker layers use speech-only audio (silence trimmed) and skip segments that are mostly
+pauses (`SpeakerVerifier.prepare/consistency`, `web/vl/engine.js`): 0 % rejected (minimum 0.53). Voiceprints enrolled before the fix stay valid.
+
 ### What is NOT proven (read before trusting this)
 
 * **No voice-cloning attack was run.** There is no zero-shot cloning model in this project. The attackers above are TTS voices that

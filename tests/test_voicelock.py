@@ -35,6 +35,9 @@ class StubSpeaker(SpeakerVerifier):
         v[(k + 1) % DIM] = float(wave[1])           # wave[1] = how much it leaks into a neighbouring identity
         return v / np.linalg.norm(v)
 
+    def prepare(self, wave):
+        return wave
+
     def consistency(self, wave, emb_full, **kw):
         return None
 
