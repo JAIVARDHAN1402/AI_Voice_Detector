@@ -1,0 +1,4 @@
+# the site is the static folder web/ (see vercel.json: outputDirectory); keep everything else out of CLI uploads
+/*
+!/web
+!/vercel.json

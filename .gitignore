@@ -7,3 +7,6 @@ data/
 models/wavlm-base-plus/pytorch_model.bin
 models/detector_base.joblib
 models/voicelock/
+
+.vercel
+.env*
