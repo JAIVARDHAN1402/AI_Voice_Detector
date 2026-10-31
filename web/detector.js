@@ -102,12 +102,19 @@ export class Detector {
       pw[i].prob_ai = sigmoid(logit(p) - thrLogit);
       if (onWindow) onWindow(++done, total);
     }
-    const z = live.reduce((a, b) => a + b, 0) / live.length - thrLogit;
+    const zRaw = live.reduce((a, b) => a + b, 0) / live.length;
+    const z = zRaw - thrLogit;
     const pAi = sigmoid(z);
     const lo = this.realMax, hi = this.aiMin;
     const verdict = pAi >= hi ? 'ai' : pAi <= lo ? 'real' : 'unsure';
 
+    const cf = this.cls.confidence;                                   // bands measured leave-one-corpus-out (reports/confidence_lodo.json)
+    const confidence = cf ? (zRaw <= cf.real_z || zRaw >= cf.ai_z ? 'high' : 'low') : 'high';
+    const lean = pAi >= 0.5 ? 'ai' : 'real';
     const notes = [];
+    if (cf) notes.push(confidence === 'high'
+      ? `High confidence: on audio from sources the model never saw in training, verdicts like this were right about ${Math.round(cf.high_acc * 100)}% of the time.`
+      : `Low confidence (leans ${lean === 'ai' ? 'AI' : 'real'}): on audio from unseen sources, verdicts this close to the boundary were right only about ${Math.round(cf.low_acc * 100)}% of the time.`);
     if (dur < 5) notes.push('Short clip: accuracy improves a lot with 6-10+ seconds of continuous speech.');
     if (speech.some(s => !s)) notes.push(speech.filter(s => !s).length + ' silent segment(s) were ignored.');
     const ps = pw.filter(w => !w.skipped).map(w => w.prob_ai);
@@ -115,7 +122,7 @@ export class Detector {
       notes.push('Segments disagree: part of the clip looks real and part looks AI. It may be spliced or mixed.');
     if (verdict === 'unsure') notes.push('The model is not confident. Try a longer, cleaner recording.');
     notes.push('Heavily compressed audio (e.g. voice messages, phone calls) is harder to judge reliably.');
-    return { verdict, prob_ai: pAi, duration: dur, n_windows: wins.length, windows: pw, notes };
+    return { verdict, prob_ai: pAi, confidence, lean, score: zRaw, duration: dur, n_windows: wins.length, windows: pw, notes };
   }
 }
 

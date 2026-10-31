@@ -74,6 +74,11 @@ def main():
     model = hashed_model()
     real_max = b.get("real_max", 0.5 - meta["unsure_margin"])
     ai_min = b.get("ai_min", 0.5 + meta["unsure_margin"])
+    conf_file = ROOT / "reports" / "confidence_lodo.json"
+    if conf_file.exists():                         # confidence bands measured leave-one-corpus-out (scripts/dg_experiments.py)
+        c = json.loads(conf_file.read_text())
+        meta["confidence"] = {"real_z": c["real_z"], "ai_z": c["ai_z"], "high_acc": round(c["direct"]["high_conf_acc"], 3),
+                              "low_acc": round(c["direct"]["low_conf_acc"], 3), "high_share": round(c["direct"]["high_conf_share"], 3)}
     OUT.write_text(json.dumps({
         "model_file": model.name, "model_bytes": model.stat().st_size,
         "layers": b["layers"], "dim": 1536, "threshold": b["threshold"], "real_max": real_max, "ai_min": ai_min,

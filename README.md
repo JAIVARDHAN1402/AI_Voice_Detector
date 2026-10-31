@@ -295,6 +295,34 @@ pauses (`SpeakerVerifier.prepare/consistency`, `web/vl/engine.js`): 0 % rejected
 * Not implemented: WebRTC streaming/live calls, Postgres (SQLite is used), React/Tailwind (the UI is plain HTML/JS), SIEM export, authentication of the API callers beyond one optional key, hosting (it needs a Python backend with the models; the Vercel site is the in-browser detector only).
 * Active voice liveness and multi-layer deepfake detection are patented areas; the combination here (transaction-bound, session-bound challenge with a signed token) has not been checked against patents.
 
+## Accuracy on sources the model has never seen (read this first)
+
+Two different numbers describe this detector, and only one of them is what you meet with new audio:
+
+* **Familiar sources** (new clips and speakers of corpora it was trained on): about 88 % (above, `reports/evaluation.json`).
+* **A corpus it has never seen** (leave-one-corpus-out, 9 corpora, direct-capture audio, macro average, `scripts/dg_experiments.py`): about **80 %**
+  (79.7% for the plain head; 73-75 % when simulated loudspeaker-to-microphone replay is included).
+
+Why not higher: the detector ranks clips well (AUC 0.93-0.94) but the score of a whole new source shifts. Picking the best threshold *per corpus* would give 87.4 %
+instead of 78.7 %, but nothing in one recording tells the model which shift applies. What was tried to close the gap (all leave-one-corpus-out, same metric):
+
+| training variant | unseen-corpus accuracy | AUC | with replay |
+|---|---|---|---|
+| plain MLP (torch replica of the deployed head) | 79.7% | 0.933 | 75.5% |
+| + dropout 0.3 and input noise | 78.9% | 0.940 | 75.2% |
+| + chatgpt2 data (chat-style gpt-4o-mini-tts answers) | 80.2% | 0.940 | 76.1% |
+| + group-DRO over (corpus, label) cells | 80.3% | 0.938 | 76.1% |
+| + same-label mixup | 80.4% | 0.933 | 75.9% |
+| DRO + chatgpt2 + 3-model ensemble | 79.6% | 0.935 | 75.7% |
+
+A second-stage calibrator trained on out-of-domain scores (`scripts/stage2_calibrator.py`) gave 78-79 %, i.e. no gain. So no training trick moved it past ~80 %; the
+limit is the diversity of the training sources, and more diverse real and AI corpora are the real lever (not downloaded here).
+
+**What the app does about it: every verdict now carries a measured confidence** (`reports/confidence_lodo.json`). On unseen corpora, verdicts whose score is clearly on one
+side (mean window logit <= -5.0 or >= 1.5) were **86.1% accurate on 77.6% of clips**; the rest were
+52.9% accurate (a coin flip) and are shown as "low confidence" / "Uncertain, leans AI|real". If you can give 3 real and 3 AI clips from your own source,
+calibrating the threshold on them lifts accuracy from 78.7 % to about 84 % (simulated on held-out corpora; not built into the app).
+
 ## Research: error guarantees on unseen AI generators (`research/PAPER.md`)
 
 **Question.** A detector's accuracy says little about how often an AI voice from a generator it has *never seen* is accepted as real. This study

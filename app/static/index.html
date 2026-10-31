@@ -271,7 +271,8 @@ function colorFor(p){ return 'hsl(' + (150 - 135*p) + ' 60% 45%)'; }
 function render(j){
   const b = $('#badge');
   b.className = 'badge ' + j.verdict;
-  b.textContent = {real:'Real voice', ai:'AI-generated', unsure:'Uncertain'}[j.verdict];
+  const label = {real:'Real voice', ai:'AI-generated', unsure: j.lean === 'ai' ? 'Uncertain, leans AI' : 'Uncertain, leans real'}[j.verdict];
+  b.textContent = label + (j.confidence === 'low' && j.verdict !== 'unsure' ? ' (low confidence)' : '');
   $('#headline').textContent = Math.round(j.prob_ai*100) + '% probability AI-generated';
   $('#subline').textContent = j.duration.toFixed(1) + ' s analysed · ' + j.n_windows + ' segment' + (j.n_windows>1?'s':'');
   $('#needle').style.left = (j.prob_ai*100) + '%';

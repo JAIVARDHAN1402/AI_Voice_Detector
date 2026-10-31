@@ -1,4 +1,5 @@
 """Inference: audio -> verdict. Shared by the web app and the command-line tool."""
+import json
 from pathlib import Path
 
 import joblib
@@ -8,6 +9,7 @@ from .audio import SR, load_bytes, load_file, windows
 from .features import Embedder, ROOT
 
 BUNDLE = ROOT / "models" / "detector.joblib"
+CONFIDENCE_FILE = ROOT / "reports" / "confidence_lodo.json"
 WIN_S, HOP_S = 3.0, 1.5
 MAX_SECONDS = 60.0
 MIN_SECONDS = 1.0
@@ -31,6 +33,17 @@ def _logit(p):
     return np.log(p / (1 - p))
 
 
+def load_confidence(path: Path = CONFIDENCE_FILE) -> dict:
+    """Confidence bands measured leave-one-corpus-out (scripts/dg_experiments.py): a verdict whose mean window logit is <= real_z or >= ai_z
+    is 'high confidence'. high_acc / low_acc are the accuracies of high- and low-confidence verdicts on corpora never seen in training."""
+    base = {"real_z": -5.0, "ai_z": 1.5}
+    try:
+        d = json.loads(path.read_text(encoding="utf-8"))
+        return {**base, **{k: d[k] for k in ("real_z", "ai_z")}, "high_acc": d["direct"]["high_conf_acc"], "low_acc": d["direct"]["low_conf_acc"]}
+    except (OSError, ValueError, KeyError):
+        return base
+
+
 class Detector:
     def __init__(self, bundle_path: Path = BUNDLE):
         b = joblib.load(bundle_path)
@@ -43,6 +56,7 @@ class Detector:
         self.real_max = b.get("real_max", 0.5 - m)
         self.ai_min = b.get("ai_min", 0.5 + m)
         self.meta = b.get("meta", {})
+        self.conf = load_confidence()
         self.embedder = Embedder()
 
     def _prob_windows(self, ws):
@@ -88,7 +102,8 @@ class Detector:
             pw[i].update(skipped=False, prob_ai=float(p))
 
         # Aggregate in logit space (robust to one extreme window); shift so the calibrated threshold maps to 0.5.
-        z = float(np.mean(_logit(probs)) - _logit(self.threshold))
+        z_raw = float(np.mean(_logit(probs)))
+        z = z_raw - float(_logit(self.threshold))
         p_ai = float(1 / (1 + np.exp(-z)))
         lo, hi = self.real_max, self.ai_min
         verdict = "ai" if p_ai >= hi else "real" if p_ai <= lo else "unsure"
@@ -96,7 +111,14 @@ class Detector:
             if not w["skipped"]:
                 w["prob_ai"] = float(1 / (1 + np.exp(-(_logit(w["prob_ai"]) - _logit(self.threshold)))))
 
+        confidence = "high" if (z_raw <= self.conf["real_z"] or z_raw >= self.conf["ai_z"]) else "low"
+        lean = "ai" if p_ai >= 0.5 else "real"
         notes = []
+        if "high_acc" in self.conf:
+            if confidence == "high":
+                notes.append(f"High confidence: on audio from sources the model never saw in training, verdicts like this were right about {self.conf['high_acc'] * 100:.0f}% of the time.")
+            else:
+                notes.append(f"Low confidence (leans {'AI' if lean == 'ai' else 'real'}): on audio from unseen sources, verdicts this close to the boundary were right only about {self.conf['low_acc'] * 100:.0f}% of the time.")
         speech_dur = len(idx) * HOP_S if len(ws) > 1 else dur
         if dur < 5:
             notes.append("Short clip: accuracy improves a lot with 6-10+ seconds of continuous speech.")
@@ -108,8 +130,8 @@ class Detector:
         if verdict == "unsure":
             notes.append("The model is not confident. Try a longer, cleaner recording.")
         notes.append("Heavily compressed audio (e.g. voice messages, phone calls) is harder to judge reliably.")
-        return {"verdict": verdict, "prob_ai": p_ai, "duration": dur, "n_windows": len(ws),
-                "windows": pw, "notes": notes}
+        return {"verdict": verdict, "prob_ai": p_ai, "confidence": confidence, "lean": lean, "score": z_raw, "duration": dur,
+                "n_windows": len(ws), "windows": pw, "notes": notes}
 
     def predict_bytes(self, data: bytes, suffix: str = "") -> dict:
         try:

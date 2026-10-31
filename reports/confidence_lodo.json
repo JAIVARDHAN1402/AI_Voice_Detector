@@ -1,0 +1,18 @@
+{
+ "real_z": -5.0,
+ "ai_z": 1.5,
+ "scope": "direct capture (clean + codec/noise/reverb), leave-one-corpus-out, macro over 9 corpora",
+ "source": "scripts/dg_experiments.py analysis; band chosen for >=86% accuracy on committed verdicts",
+ "direct": {
+  "all_verdicts_acc": 0.77703273546785,
+  "high_conf_acc": 0.8612099609624845,
+  "high_conf_share": 0.7760823871841773,
+  "low_conf_acc": 0.528826011861659
+ },
+ "all": {
+  "all_verdicts_acc": 0.7314952277442965,
+  "high_conf_acc": 0.837219868278813,
+  "high_conf_share": 0.721740386632959,
+  "low_conf_acc": 0.5067069643394837
+ }
+}
