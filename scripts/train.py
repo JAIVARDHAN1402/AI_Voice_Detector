@@ -273,6 +273,8 @@ if __name__ == "__main__":
     ap.add_argument("mode", choices=["explore", "final"])
     ap.add_argument("--layers", type=int, nargs="+", default=[2, 3, 5, 7])
     ap.add_argument("--C", type=float, default=0.05)
+    ap.add_argument("--out", default="detector.joblib", help="bundle file name under models/ (the web build uses detector_web.joblib)")
+    ap.add_argument("--report", default="evaluation.json", help="report file name under reports/")
     a = ap.parse_args()
     if a.mode == "explore":
         explore()
@@ -280,9 +282,9 @@ if __name__ == "__main__":
         clf, report, thr = final(a.layers, a.C)
         REPORTS.mkdir(exist_ok=True)
         MODELS.mkdir(exist_ok=True)
-        (REPORTS / "evaluation.json").write_text(json.dumps(report, indent=2))
+        (REPORTS / a.report).write_text(json.dumps(report, indent=2))
         joblib.dump({"clf": clf, "layers": a.layers, "threshold": float(thr), "unsure_margin": 0.15,
                      "real_max": report["policy"]["real_max"], "ai_min": report["policy"]["ai_min"],
                      "meta": {"head": HEAD, "backbone": "microsoft/wavlm-base-plus (8 layers)", "datasets": TRAIN_SETS + EXTRA_SETS,
-                              "pooled_eer": report["pooled"]["eer"]}}, MODELS / "detector.joblib")
+                              "pooled_eer": report["pooled"]["eer"]}}, MODELS / a.out)
         print(json.dumps(report, indent=2))

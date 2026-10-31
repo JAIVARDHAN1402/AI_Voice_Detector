@@ -207,13 +207,21 @@ so no server is needed and audio never leaves the device. Vercel cannot host the
 ```
 web/index.html, app.js   UI (upload + microphone)
 web/detector.js, dsp.js  JavaScript port of the pipeline (trim, windows, VAD, classifier, aggregation)
-web/model/               wavlm_pooled.<hash>.onnx (69 MB: int8 matmuls + fp16-stored convs), head.<hash>.bin (6 MB MLP head), classifier.json
+web/model/               wavlm_pooled.<hash>.onnx (48 MB, 4 transformer layers: int8 matmuls + fp16-stored convs), head.<hash>.bin (4.7 MB MLP head), classifier.json
 web/ort/                 vendored onnxruntime-web 1.30.0 (MIT)
 web/vercel.json          cross-origin-isolation headers (multi-threaded WASM) + caching
 ```
 
-Rebuild after retraining: `export_onnx.py` -> `quantize_onnx.py` -> `export_classifier.py` (writes the hashed model name and the
-folded classifier). Test locally with `python scripts/dev_web.py` (same headers as Vercel) and deploy with
+**Load time.** The first visit downloads the model once (the browser caches it afterwards). It was 69 MB (7 transformer layers); the site now
+uses a shallower backbone, **4 layers -> 48 MB (-31 %)** and faster inference, with its own head trained on layers 2,3,4
+(`models/detector_web.joblib`, `reports/evaluation_web.json`: pooled held-out accuracy 86.9 % vs 87.8 % for the 7-layer model that the
+local app and VoiceLock keep using; the 5-layer variant was 87.4 %). So the website and the local app can disagree on borderline clips.
+On this machine's slow connection the old file took 200-400 s to download, the size is what matters.
+
+Rebuild after retraining: `train.py final --layers 2 3 4 --out detector_web.joblib --report evaluation_web.json` ->
+`export_onnx.py --bundle detector_web.joblib --out data/onnx/wavlm_pooled_fp32.onnx` -> `quantize_onnx.py --bundle detector_web.joblib` ->
+`export_classifier.py detector_web.joblib` (writes the hashed model name and the folded classifier). The comparison printed by
+`quantize_onnx.py` only supports a linear head; the MLP parity was checked separately (80 windows: 0 flipped decisions). Test locally with `python scripts/dev_web.py` (same headers as Vercel) and deploy with
 `cd web && npx vercel --prod`.
 
 Checks: the ONNX export matches PyTorch to ~2e-6; int8 quantisation shifts window logits by 0.6 (std) with 0 flipped

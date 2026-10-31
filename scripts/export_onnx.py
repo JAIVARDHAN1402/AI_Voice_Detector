@@ -43,8 +43,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(ROOT / "web" / "model" / "wavlm_pooled_fp32.onnx"))
     ap.add_argument("--legacy", action="store_true", help="use the TorchScript exporter")
+    ap.add_argument("--bundle", default="detector.joblib", help="model bundle under models/ whose layers decide the backbone depth")
     a = ap.parse_args()
-    layers = joblib.load(ROOT / "models" / "detector.joblib")["layers"]
+    layers = joblib.load(ROOT / "models" / a.bundle)["layers"]
     net = build(layers)
     x = torch.randn(1, WIN) * 0.1
     with torch.inference_mode():

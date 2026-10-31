@@ -48,6 +48,7 @@ def main():
     ap.add_argument("--dst", default=str(TMP / "wavlm_pooled_int8.onnx"))
     ap.add_argument("--web", default=str(WEB / "wavlm_pooled.onnx"), help="final file: int8 matmuls + fp16-stored conv weights")
     ap.add_argument("--skip-quantize", action="store_true")
+    ap.add_argument("--bundle", default="detector.joblib", help="model bundle under models/ used for the accuracy comparison")
     a = ap.parse_args()
     if not a.skip_quantize:
         quantize_dynamic(a.src, a.dst, weight_type=QuantType.QInt8, op_types_to_quantize=["MatMul", "Gemm"],
@@ -58,7 +59,7 @@ def main():
     print("web model (fp16-stored conv weights):", round(Path(a.web).stat().st_size / 1e6, 1), "MB")
     a.dst = a.web
 
-    bundle = joblib.load(ROOT / "models" / "detector.joblib")
+    bundle = joblib.load(ROOT / "models" / a.bundle)
     layers, clf = bundle["layers"], bundle["clf"]
     emb = Embedder()
     sess = ort.InferenceSession(a.dst, providers=["CPUExecutionProvider"])

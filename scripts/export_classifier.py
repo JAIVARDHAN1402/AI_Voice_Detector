@@ -37,7 +37,8 @@ def hashed_model():
 
 
 def main():
-    b = joblib.load(ROOT / "models" / "detector.joblib")
+    bundle = sys.argv[1] if len(sys.argv) > 1 else "detector.joblib"       # e.g. detector_web.joblib for the shallower web backbone
+    b = joblib.load(ROOT / "models" / bundle)
     clf = b["clf"]
     scaler, head = clf.steps[0][1], clf.steps[-1][1]
     mu, sd = scaler.mean_.astype(np.float64), scaler.scale_.astype(np.float64)
